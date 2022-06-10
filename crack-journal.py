@@ -4,7 +4,7 @@ Created on Wen march 24 2022
 @author: jca
 sliding window: https://pyimagesearch.com/2015/03/23/sliding-windows-for-object-detection-with-python-and-opencv/
 balanced histogram: https://theailearner.com/2019/07/19/balanced-histogram-thresholding/
-Histogram equalization: https://vovkos.github.io/doxyrest-showcase/opencv/sphinxdoc/page_tutorial_py_histogram_equalization.html
+
 """
 
 import numpy as np
@@ -17,9 +17,9 @@ import cv2
 # Load an image
 path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
 os.chdir(path)  # Access the path
-image = cv2.imread('_DCS6695_412.jpg') #load image
-img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) #turn to gray scale
-winW=28 #Window size
+image = cv2.imread('_DCS6695_412.jpg')
+img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+winW=28
 winH=28
 
 def sliding_window(image, stepSize, windowSize):
@@ -70,7 +70,7 @@ def balanced_hist_thresholding(b):
 
 # Histogram and CDF for the initial image
 hist, bins = np.histogram(img.flatten(), 256, [0, 256])
-cdf = hist.cumsum() # Cumulative distribution function
+cdf = hist.cumsum()
 cdf_normalized = cdf * hist.max() / cdf.max()
 
 
@@ -80,49 +80,41 @@ cdf_normalized = cdf * hist.max() / cdf.max()
 cdf_m = np.ma.masked_equal(cdf,0)
 cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
 cdf = np.ma.filled(cdf_m,0).astype('uint8')
-img2 = cdf[img] #equalized image
-hist2, bins = np.histogram(img2.flatten(), 256, [0, 256]) # Histogram for equalized image
-cdf2 = hist2.cumsum() #CDF for equalized image
+img2 = cdf[img]
+hist2, bins = np.histogram(img2.flatten(), 256, [0, 256])
+cdf2 = hist2.cumsum()
 cdf_normalized2 = cdf2 * hist2.max() / cdf2.max()
 
 
-# Plot initial gray image
+
 plt.figure('img',figsize=(10, 10))
-plt.subplot(221)
+plt.subplot(131)
 plt.imshow(img, cmap='gray')
 plt.title('Image')
 
-# Plot initial gray image's histogram
-plt.subplot(222)
-plt.plot(cdf_normalized, color='b')
+plt.subplot(132)
+# plt.plot(cdf_normalized, color='b')
 plt.hist(img.flatten(), 256, [0, 256], color='r')
 plt.xlim([0, 256])
 plt.legend(('cdf', 'histogram'), loc='upper left')
 
-# Plot equalized image
-plt.subplot(2, 2, 3)
-plt.imshow(img2, cmap='gray')
-plt.title('Image2')
+# plt.subplot(2, 2, 3)
+# plt.imshow(img2, cmap='gray')
+# plt.title('Image2')
 
-# Plot equalized image's histogram
-plt.subplot(224)
-plt.plot(cdf_normalized2, color='b')
+plt.subplot(133)
+# plt.plot(cdf_normalized2, color='b')
 plt.hist(img2.flatten(), 256, [0, 256], color='r')
 plt.xlim([0, 256])
 plt.legend(('cdf2', 'histogram2'), loc='upper left')
 plt.show()
 
-import pdb
-
 for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
-    # print("lalala")
-    # pdb.set_trace()
-    red = np.histogram(window.ravel(), bins=256, range=[0, 256])
+    red = np.histogram(window[..., 0].ravel(), bins=256, range=[0, 256])
     clone = img.copy()
     cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
     # cv2.imshow("Window", clone)
     trhs=balanced_hist_thresholding(red)
-
     plt.figure('imggdfgw', figsize=(10, 10))
     plt.subplot(2, 2, 1)
     plt.imshow(clone, cmap='gray')
@@ -135,7 +127,7 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
     plt.subplot(2, 2, 4)
     plt.imshow(thresh, cmap='gray')
-    print(trhs)
+
 # ======================================================================================================================
 """CLAHE (Contrast Limited Adaptive Histogram Equalization)"""
 # create a CLAHE object (Arguments are optional).
