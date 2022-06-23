@@ -33,7 +33,7 @@ sauvola_frames_Pw = []
 path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
 os.chdir(path)  # Access the path
 image = cv2.imread('_DCS6695_412 - Copy.jpg')
-cropped_frames=[image]
+cropped_frames = [image]
 
 for i in range(0, len(cropped_frames)):
     img = cropped_frames[i]
@@ -53,7 +53,6 @@ for i in range(0, len(cropped_frames)):
     binary_sauvola_Pw_bw.dtype = 'uint8'
 
     binary_sauvola_Pw_bw *= 255
-
 
     # The list which saves the images after image binarization.
 
@@ -76,10 +75,8 @@ for i in range(0, len(cropped_frames)):
 
     skeleton_Pw *= 255
 
-
     # The list which saves the images after the skeletonization.
     skeleton_frames_Pw.append(skeleton_Pw)
-
 
 # 6. Detect the edges of the crack.
 
@@ -97,25 +94,24 @@ for i in range(0, len(cropped_frames)):
 
     edges_Pw *= 255
 
-
     # The list which saves the images after edge detection.
     edges_frames_Pw.append(edges_Pw)
 
 # 7. Calculate the width of the crack.
 # 1) Find skeleton using BFS
-# 2) Set the direction of the crack by searching skeletion pixels which are 5 pixels away from the skeleton pixel.
+# 2) Set the direction of the crack by searching skeleton pixels which are 5 pixels away from the skeleton pixel.
 # 3) Draw a perpendicular line of the direction
-# 4) The perpendicular line meets the edge. The distance is calulated by counting pixels on the line.
+# 4) The perpendicular line meets the edge. The distance is calculated by counting pixels on the line.
 # 5) Convert the number of pixels into real mm width, and classify the danger group.
 
 import queue
 import math
 
-dx_dir_right = [-5, -5, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 5]
-dy_dir_right = [0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1]
+dx_dir_right = [-5, -5, -5, -5, -4, -4 - 3, -3, -2, -1, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5]
+dy_dir_right = [0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3, 3, 2, 1]
 
-dx_dir_left = [5, 5, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -5]
-dy_dir_left = [0, -1, -2, -3, -4, -5, -5, -5, -5, -5, -4, -3, -2, -1]
+dx_dir_left = [5, 5, 5, 5, 4, 4, 3, 3, 2, 1, 0, -1, -2, -3, -3, -4, -4, -5, -5, -5]
+dy_dir_left = [0, -1, -2, -3, -3, -4, -4, -5, -5, -5, -5, -5, -5, -5, -4, -4, -3, -3, -2, -1]
 
 dx_bfs = [-1, -1, 0, 1, 1, 1, 0, -1]
 dy_bfs = [0, 1, 1, 1, 0, -1, -1, -1]
@@ -124,7 +120,6 @@ save_result = []
 save_risk = []
 
 for k in range(0, len(skeleton_frames_Pw)):
-
 
     # Searching the skeleton through BFS.
     start = [0, 0]
@@ -138,10 +133,9 @@ for k in range(0, len(skeleton_frames_Pw)):
     visit = np.zeros((len_x, len_y))
     crack_width_list = []
 
-
     # Find out the direction of the crack from skeleton pixel.
     while (q.empty() == 0):
-        next = q.get()  #Evaluates the next pixel in the queue
+        next = q.get()  # Evaluates the next pixel in the queue
         x = next[0]
         y = next[1]
         right_x = right_y = left_x = left_y = -1
@@ -151,32 +145,38 @@ for k in range(0, len(skeleton_frames_Pw)):
             # Estimating the direction of the crack from skeleton
 
             # We start checking the pixel in x,y that has a value of 255. We proceed to check the pixels that also have a 255 value in a radius of 5 pixels.
-            for i in range(0, len(dx_dir_right)):   #First half of the circle moving from 5pixels up from the x,y pixel and moving right
+            for i in range(0, len(
+                    dx_dir_right)):  # First half of the circle moving from 5pixels up from the x,y pixel and moving right
                 right_x = x + dx_dir_right[i]
                 right_y = y + dy_dir_right[i]
-                if (right_x < 0 or right_y < 0 or right_x >= len_x or right_y >= len_y):    #if we are outside the image's limit, we set righ_x and _y to -1 to move to the next position
+                if (
+                        right_x < 0 or right_y < 0 or right_x >= len_x or right_y >= len_y):  # if we are outside the image's limit, we set righ_x and _y to -1 to move to the next position
                     right_x = right_y = -1
                     continue;
-                if (skeleton_frames_Pw[k][right_x][right_y] == 255): break; #Check the place we are if the skeleton image has something (a value of 1)in th eplace we are checking or if it is 0. If it has a value of 1, breaks (goes out of the for)
-                if (i == 13): right_x = right_y = -1    #if the count is in the last number, it makes right x and right y equals to -1 to move to the next part of the circle
+                if (skeleton_frames_Pw[k][right_x][
+                    right_y] == 255): break;  # Check the place we are if the skeleton image has something (a value of 1)in th eplace we are checking or if it is 0. If it has a value of 1, breaks (goes out of the for)
+                if (
+                        i == 13): right_x = right_y = -1  # if the count is in the last number, it makes right x and right y equals to -1 to move to the next part of the circle
 
-            if (right_x == -1): # If nothing found, the final value for right x and y is set to the value of x and y
+            if (right_x == -1):  # If nothing found, the final value for right x and y is set to the value of x and y
                 right_x = x
                 right_y = y
 
-            for i in range(0, len(dx_dir_left)):    #Second half of the circle moving from 5pixels down from the x,y pixel and moving left
+            for i in range(0, len(
+                    dx_dir_left)):  # Second half of the circle moving from 5pixels down from the x,y pixel and moving left
                 left_x = x + dx_dir_left[i]
                 left_y = y + dy_dir_left[i]
-                if (left_x < 0 or left_y < 0 or left_x >= len_x or left_y >= len_y):    #if we are outside the image's limit, we set left_x and _y to -1 to move to the next position
+                if (
+                        left_x < 0 or left_y < 0 or left_x >= len_x or left_y >= len_y):  # if we are outside the image's limit, we set left_x and _y to -1 to move to the next position
                     left_x = left_y = -1
                     continue;
-                if (skeleton_frames_Pw[k][left_x][left_y] == 255): break;   #if the count is in the last number, it makes left x and left y equals to -1 to move to finish the circle check
+                if (skeleton_frames_Pw[k][left_x][
+                    left_y] == 255): break;  # if the count is in the last number, it makes left x and left y equals to -1 to move to finish the circle check
                 if (i == 13): left_x = left_y = -1
 
             if (left_x == -1):  # final value for left x and y, we set the value to x and y
                 left_x = x
                 left_y = y
-
 
             # Set the direction of the crack as angle(theta) by using acos formula
             base = right_y - left_y
@@ -185,7 +185,8 @@ for k in range(0, len(skeleton_frames_Pw)):
 
             if (base == 0 and height != 0):
                 theta = 90.0
-            elif (base == 0 and height == 0):   #If base and height are 0, goes back to check the next pixel in the skeleton
+            elif (
+                    base == 0 and height == 0):  # If base and height are 0, goes back to check the next pixel in the skeleton
                 continue
             else:
                 theta = math.degrees(
@@ -193,7 +194,6 @@ for k in range(0, len(skeleton_frames_Pw)):
 
             theta += 90
             dist = 0
-
 
             # Calculate the distance if the perpendicular line meets the edge of the crack.
             for i in range(0, 2):
@@ -288,7 +288,6 @@ for k in range(0, len(skeleton_frames_Pw)):
                 dist += math.sqrt((y - pix_y) ** 2 + (x - pix_x) ** 2)
                 theta += 180
 
-
             # The list which saves the width of the crack.
             crack_width_list.append(dist)
 
@@ -298,11 +297,10 @@ for k in range(0, len(skeleton_frames_Pw)):
 
             if (next_x < 0 or next_y < 0 or next_x >= len_x or next_y >= len_y): continue;
             if (visit[next_x][next_y] == 0):
-                q.put([next_x, next_y])                                                                                 # put the evaluated x and y in the queue
-                visit[next_x][next_y] = 1                                                                               # NO MUY SEGURO
+                q.put([next_x, next_y])  # put the evaluated x and y in the queue
+                visit[next_x][next_y] = 1  # NO MUY SEGURO
 
     crack_width_list.sort(reverse=True)
-
 
     # Convert into real width.
     print(len(crack_width_list))
@@ -318,7 +316,6 @@ for k in range(0, len(skeleton_frames_Pw)):
 
     print('crack width : ', real_width)
 
-
     # Classify the danger group.
     if (real_width >= 0.3):
         save_risk.append('high')
@@ -329,7 +326,6 @@ for k in range(0, len(skeleton_frames_Pw)):
     else:
         save_risk.append('low')
         print('Risk group: low\n')
-
 
 # Save those information into text files.
 f1 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\width.txt", 'w')
