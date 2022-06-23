@@ -24,16 +24,23 @@ from skimage.color import rgb2gray
 from skimage.data import page
 from skimage.filters import (threshold_sauvola)
 from PIL import Image
+import os
 
 sauvola_frames_Pw_bw = []
 sauvola_frames_Pw = []
+
+# Load an image
+path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
+os.chdir(path)  # Access the path
+image = cv2.imread('_DCS6695_412 - Copy.jpg')
+cropped_frames=[image]
 
 for i in range(0, len(cropped_frames)):
     img = cropped_frames[i]
     img_gray = rgb2gray(img)
 
-    # window size와 k값은 'Concrete Crack Identification Using a UAV Incorporating Hybrid Image Processing' 논문이 제시한 값을
-    # 그대로 사용하였습니다.
+    # window size and the value of k is the value suggested by the paper 'Concrete Crack Identification Using a UAV Incorporating Hybrid Image Processing'
+    # used as is.
 
     # window size and k value were used without any changes from the
     # 'Concrete Crack Identification Using a UAV Incorporating Hybrid Image Processing' thesis.
@@ -69,7 +76,7 @@ for i in range(0, len(cropped_frames)):
 
     skeleton_Pw *= 255
 
-    # Skeletonize가 끝난 이미지를 저장하는 리스트입니다.
+
     # The list which saves the images after the skeletonization.
     skeleton_frames_Pw.append(skeleton_Pw)
 
@@ -90,7 +97,7 @@ for i in range(0, len(cropped_frames)):
 
     edges_Pw *= 255
 
-    # Edge detection이 끝난 이미지를 저장하는 리스트입니다.
+
     # The list which saves the images after edge detection.
     edges_frames_Pw.append(edges_Pw)
 
@@ -117,8 +124,8 @@ save_result = []
 save_risk = []
 
 for k in range(0, len(skeleton_frames_Pw)):
-    print('--------------''동영상 내 재생 시간 : ', (saving_bounding_boxes[k][0] // 6) * 0.25, '초', '-----------------')
-    # BFS를 통해 Skeleton을 찾습니다.
+
+
     # Searching the skeleton through BFS.
     start = [0, 0]
     next = []
@@ -131,44 +138,46 @@ for k in range(0, len(skeleton_frames_Pw)):
     visit = np.zeros((len_x, len_y))
     crack_width_list = []
 
-    # Skeleton pixel로 부터 균열의 진행 방향을 찾아냅니다.
+
     # Find out the direction of the crack from skeleton pixel.
     while (q.empty() == 0):
-        next = q.get()
+        next = q.get()  #Evaluates the next pixel in the queue
         x = next[0]
         y = next[1]
         right_x = right_y = left_x = left_y = -1
 
         if (skeleton_frames_Pw[k][x][y] == 255):
-            # Skeleton을 바탕으로 균열의 진행 방향을 구합니다.
+
             # Estimating the direction of the crack from skeleton
-            for i in range(0, len(dx_dir_right)):
+
+            # We start checking the pixel in x,y that has a value of 255. We proceed to check the pixels that also have a 255 value in a radius of 5 pixels.
+            for i in range(0, len(dx_dir_right)):   #First half of the circle moving from 5pixels up from the x,y pixel and moving right
                 right_x = x + dx_dir_right[i]
                 right_y = y + dy_dir_right[i]
-                if (right_x < 0 or right_y < 0 or right_x >= len_x or right_y >= len_y):
+                if (right_x < 0 or right_y < 0 or right_x >= len_x or right_y >= len_y):    #if we are outside the image's limit, we set righ_x and _y to -1 to move to the next position
                     right_x = right_y = -1
                     continue;
-                if (skeleton_frames_Pw[k][right_x][right_y] == 255): break;
-                if (i == 13): right_x = right_y = -1
+                if (skeleton_frames_Pw[k][right_x][right_y] == 255): break; #Check the place we are if the skeleton image has something (a value of 1)in th eplace we are checking or if it is 0. If it has a value of 1, breaks (goes out of the for)
+                if (i == 13): right_x = right_y = -1    #if the count is in the last number, it makes right x and right y equals to -1 to move to the next part of the circle
 
-            if (right_x == -1):
+            if (right_x == -1): # If nothing found, the final value for right x and y is set to the value of x and y
                 right_x = x
                 right_y = y
 
-            for i in range(0, len(dx_dir_left)):
+            for i in range(0, len(dx_dir_left)):    #Second half of the circle moving from 5pixels down from the x,y pixel and moving left
                 left_x = x + dx_dir_left[i]
                 left_y = y + dy_dir_left[i]
-                if (left_x < 0 or left_y < 0 or left_x >= len_x or left_y >= len_y):
+                if (left_x < 0 or left_y < 0 or left_x >= len_x or left_y >= len_y):    #if we are outside the image's limit, we set left_x and _y to -1 to move to the next position
                     left_x = left_y = -1
                     continue;
-                if (skeleton_frames_Pw[k][left_x][left_y] == 255): break;
+                if (skeleton_frames_Pw[k][left_x][left_y] == 255): break;   #if the count is in the last number, it makes left x and left y equals to -1 to move to finish the circle check
                 if (i == 13): left_x = left_y = -1
 
-            if (left_x == -1):
+            if (left_x == -1):  # final value for left x and y, we set the value to x and y
                 left_x = x
                 left_y = y
 
-            # acos 공식을 바탕으로 균열의 진행 방향을 각도(theta)로 나타냅니다.
+
             # Set the direction of the crack as angle(theta) by using acos formula
             base = right_y - left_y
             height = right_x - left_x
@@ -176,7 +185,7 @@ for k in range(0, len(skeleton_frames_Pw)):
 
             if (base == 0 and height != 0):
                 theta = 90.0
-            elif (base == 0 and height == 0):
+            elif (base == 0 and height == 0):   #If base and height are 0, goes back to check the next pixel in the skeleton
                 continue
             else:
                 theta = math.degrees(
@@ -185,7 +194,7 @@ for k in range(0, len(skeleton_frames_Pw)):
             theta += 90
             dist = 0
 
-            # 균열 진행 방향의 수직선과 Edge가 만나면, 그 거리를 구합니다.
+
             # Calculate the distance if the perpendicular line meets the edge of the crack.
             for i in range(0, 2):
 
@@ -279,7 +288,7 @@ for k in range(0, len(skeleton_frames_Pw)):
                 dist += math.sqrt((y - pix_y) ** 2 + (x - pix_x) ** 2)
                 theta += 180
 
-                # 균열의 폭을 저장하는 리스트입니다.
+
             # The list which saves the width of the crack.
             crack_width_list.append(dist)
 
@@ -289,12 +298,12 @@ for k in range(0, len(skeleton_frames_Pw)):
 
             if (next_x < 0 or next_y < 0 or next_x >= len_x or next_y >= len_y): continue;
             if (visit[next_x][next_y] == 0):
-                q.put([next_x, next_y])
-                visit[next_x][next_y] = 1
+                q.put([next_x, next_y])                                                                                 # put the evaluated x and y in the queue
+                visit[next_x][next_y] = 1                                                                               # NO MUY SEGURO
 
     crack_width_list.sort(reverse=True)
 
-    # 실제의 길이로 변환합니다.
+
     # Convert into real width.
     print(len(crack_width_list))
     if (len(crack_width_list) == 0):
@@ -307,24 +316,24 @@ for k in range(0, len(skeleton_frames_Pw)):
         real_width = round(crack_width_list[9] * 0.92, 2)
         save_result.append(real_width)
 
-    print('균열 폭 : ', real_width)
+    print('crack width : ', real_width)
 
-    # 위험군을 분류합니다.
+
     # Classify the danger group.
     if (real_width >= 0.3):
-        save_risk.append('상')
-        print('위험군 : 상\n')
+        save_risk.append('high')
+        print('risk group : high\n')
     elif (real_width < 0.3 and real_width >= 0.2):
-        save_risk.append('중')
-        print('위험군 : 중\n')
+        save_risk.append('medium')
+        print('Risk group: medium\n')
     else:
-        save_risk.append('하')
-        print('위험군 : 하\n')
+        save_risk.append('low')
+        print('Risk group: low\n')
 
-# 해당 정보를 텍스트 파일에 저장합니다.
+
 # Save those information into text files.
-f1 = open("C:\\Users\\user\\Desktop\\width.txt", 'w')
-f2 = open("C:\\Users\\user\\Desktop\\risk.txt", 'w')
+f1 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\width.txt", 'w')
+f2 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\risk.txt", 'w')
 
 for z in range(0, len(save_result)):
     f1.write(str(save_result[z]) + 'mm' + '\n')
