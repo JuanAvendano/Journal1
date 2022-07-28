@@ -13,11 +13,12 @@ from scipy.misc import face
 from PIL import Image, ImageDraw
 import os
 import cv2
+import xlsxwriter
 
 # Load an image
-path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
+path = r'C:\Users\juanc\Desktop\09 Crack 2\02.1-Cracked_predicted'
 os.chdir(path)  # Access the path
-image = cv2.imread('_DCS6695_412.jpg')
+image = cv2.imread('_DCS6932_194.jpg')
 img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 winW = 28
 winH = 28
@@ -25,8 +26,8 @@ winH = 28
 
 def sliding_window(image, stepSize, windowSize):
     # slide a window across the image
-    for y in range(0, image.shape[0], stepSize):
-        for x in range(84, image.shape[1], stepSize):
+    for y in range(56, image.shape[0], stepSize):
+        for x in range(112, image.shape[1], stepSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
@@ -71,30 +72,34 @@ hist, bins = np.histogram(img.flatten(), 256, [0, 256])
 cdf = hist.cumsum()
 cdf_normalized = cdf * hist.max() / cdf.max()
 
-# Equalizaed image
+#Mask for equalization of image
 cdf_m = np.ma.masked_equal(cdf, 0)
 cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
 cdf = np.ma.filled(cdf_m, 0).astype('uint8')
+# Equalizaed image
 img2 = cdf[img]
 hist2, bins = np.histogram(img2.flatten(), 256, [0, 256])
 cdf2 = hist2.cumsum()
 cdf_normalized2 = cdf2 * hist2.max() / cdf2.max()
 
+#Plot the image
 plt.figure('img', figsize=(10, 10))
 plt.subplot(131)
 plt.imshow(img, cmap='gray')
 plt.title('Image')
 
+#subplot histogram
 plt.subplot(132)
 # plt.plot(cdf_normalized, color='b')
 plt.hist(img.flatten(), 256, [0, 256], color='r')
 plt.xlim([0, 256])
-plt.legend(('cdf', 'histogram'), loc='upper left')
+plt.legend(( 'histogram'), loc='upper left')
 
 # plt.subplot(2, 2, 3)
 # plt.imshow(img2, cmap='gray')
 # plt.title('Image2')
 
+#subplot equalized histogram
 plt.subplot(133)
 # plt.plot(cdf_normalized2, color='b')
 plt.hist(img2.flatten(), 256, [0, 256], color='r')
@@ -103,11 +108,12 @@ plt.legend(('cdf2', 'histogram2'), loc='upper left')
 plt.show()
 
 for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
-    # Histogram and balanced threshold for windows in the initial image
+    # Histogram and balanced threshold for window in the initial sub-image
     red = np.histogram(window.ravel(), bins=256, range=[0, 256])
     clone = img.copy()
+    # Creates rectangle in the coordinates over the clone to see it in the ploted image
     cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
-    # cv2.imshow("Window", clone)
+    # Perform balanced thresholding on the histogram of the sub-image
     trhs = balanced_hist_thresholding(red)
     # threshold the image
     ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
@@ -122,11 +128,28 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     # laplacian1 = laplacian / laplacian.max()
 
     # Histogram and balanced threshold for windows after Laplacian
-    red2 = np.histogram(laplacian2.ravel(), bins=512, range=[-256, 256])
+    red2 = np.histogram(laplacian.ravel(), bins=512, range=[-256, 256])
     trhs20 = balanced_hist_thresholding(red2)
     trhs2 = red2[1][trhs20]
     ret2, thresh2 = cv2.threshold(laplacian, trhs2, 255, cv2.THRESH_BINARY)
 
+    # Histogram and balanced threshold for windows after Laplacian
+    red3 = np.histogram(laplacian2.ravel(), bins=512, range=[-256, 256])
+    trhs30 = balanced_hist_thresholding(red2)
+    trhs3 = red3[1][trhs30]
+    ret3, thresh3 = cv2.threshold(laplacian2, trhs2, 255, cv2.THRESH_BINARY)
+
+    element='thresh'
+    regions = '\\_('+'window'+str(element)+'_'+str(x)+'_'+str(y)+'.xlsx'
+    workbook = xlsxwriter.Workbook(path + regions)
+    worksheet = workbook.add_worksheet()
+    row = 0
+    for col, data in enumerate(window):
+        worksheet.write_column(row, col, data)
+
+    workbook.close()
+
+    #Plot the image with the window, the pixels in the window, histogram of the window
     plt.figure('window hist trsh', figsize=(10, 10))
     plt.subplot(2, 2, 1)
     plt.imshow(clone, cmap='gray')
@@ -147,18 +170,18 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     plt.hist(laplacian.ravel(), 256, [-256, 256])
     # plt.imshow(laplacian2, cmap='gray')
     plt.subplot(2, 2, 4)
-    plt.imshow(laplacian2, cmap='gray')
+    plt.imshow(thresh2, cmap='gray')
 
     plt.figure('balanced laplacian ', figsize=(10, 10))
     plt.subplot(2, 2, 1)
     plt.imshow(clone, cmap='gray')
     plt.subplot(2, 2, 2)
-    plt.imshow(laplacian, cmap='gray')
+    plt.imshow(laplacian2, cmap='gray')
     plt.subplot(2, 2, 3)
-    plt.hist(laplacian.ravel(), 512, [-256, 256])
+    plt.hist(laplacian2.ravel(), 512, [-256, 256])
     # plt.bar(red[1][:256], red[0])
     plt.subplot(2, 2, 4)
-    plt.imshow(thresh2, cmap='gray')
+    plt.imshow(thresh3, cmap='gray')
 # ======================================================================================================================
 """CLAHE (Contrast Limited Adaptive Histogram Equalization)"""
 # create a CLAHE object (Arguments are optional).
