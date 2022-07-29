@@ -25,6 +25,13 @@ from skimage.data import page
 from skimage.filters import (threshold_sauvola)
 from PIL import Image
 import os
+import numpy as np
+from scipy import ndimage as ndi
+from skimage import feature
+from skimage.morphology import skeletonize
+from skimage.util import invert
+import queue
+import math
 
 sauvola_frames_Pw_bw = []
 sauvola_frames_Pw = []
@@ -34,6 +41,8 @@ path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
 os.chdir(path)  # Access the path
 image = cv2.imread('_DCS6695_412 - Copy.jpg')
 cropped_frames = [image]
+
+pixel_width=0.1
 
 for i in range(0, len(cropped_frames)):
     img = cropped_frames[i]
@@ -61,8 +70,7 @@ for i in range(0, len(cropped_frames)):
 
 # 5. Extract the skeleton of the crack.
 
-from skimage.morphology import skeletonize
-from skimage.util import invert
+
 
 skeleton_frames_Pw = []
 
@@ -80,9 +88,7 @@ for i in range(0, len(cropped_frames)):
 
 # 6. Detect the edges of the crack.
 
-import numpy as np
-from scipy import ndimage as ndi
-from skimage import feature
+
 
 edges_frames_Pw = []
 edges_frames_Pl = []
@@ -104,8 +110,10 @@ for i in range(0, len(cropped_frames)):
 # 4) The perpendicular line meets the edge. The distance is calculated by counting pixels on the line.
 # 5) Convert the number of pixels into real mm width, and classify the danger group.
 
-import queue
-import math
+
+# dx dir right/left son los pixeles en un circulo alrededor de un pixel central que se estudia. el radio es de 5 pixeles
+# Tiene un problema y es que la grieta se puede pasar justo por las "esquinas" y se puede pasar por alt parte de la infrmacion.
+# Para entender mejr el prblema, ver la imagen del circulo en C:\Users\juanc\OneDrive - KTH\Python\Prueba
 
 dx_dir_right = [-5, -5, -5, -5, -4, -4 - 3, -3, -2, -1, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5]
 dy_dir_right = [0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3, 3, 2, 1]
@@ -122,25 +130,25 @@ save_risk = []
 for k in range(0, len(skeleton_frames_Pw)):
 
     # Searching the skeleton through BFS.
-    start = [0, 0]
-    next = []
-    q = queue.Queue()
-    q.put(start)
+    start = [0, 0]  #Start at pixel 0,0
+    next = []       #Start an empty vector that will get the list of pixels to check
+    q = queue.Queue()   #Defines the queue. Remember, the queue takes elements and once it has studied them it deletes them frm the queue
+    q.put(start)    # Put the pixel 0,0 at the start of the queue
 
-    len_x = skeleton_frames_Pw[k].shape[0]
-    len_y = skeleton_frames_Pw[k].shape[1]
+    len_x = skeleton_frames_Pw[k].shape[0]  # generates a value equal to the length of the skeleton image
+    len_y = skeleton_frames_Pw[k].shape[1]  # generates a value equal to the height of the skeleton image
 
-    visit = np.zeros((len_x, len_y))
-    crack_width_list = []
+    visit = np.zeros((len_x, len_y))        # generates an empty array with the same dimensions that the skeletn img
+    crack_width_list = []   #Vectr fr the elements of the crack width
 
     # Find out the direction of the crack from skeleton pixel.
-    while (q.empty() == 0):
-        next = q.get()  # Evaluates the next pixel in the queue
-        x = next[0]
-        y = next[1]
-        right_x = right_y = left_x = left_y = -1
+    while (q.empty() == 0): # Evaluates the next pixel in the queue
+        next = q.get()  # next is an element with the info of the next pixel in the queue
+        x = next[0]     # vertical position (why the vertical if it is x, I don't know)
+        y = next[1]     # vertical position
+        right_x = right_y = left_x = left_y = -1    #initial value for right and left x y
 
-        if (skeleton_frames_Pw[k][x][y] == 255):
+        if (skeleton_frames_Pw[k][x][y] == 255): # We check the skeleton in the position x y obtained from the next element in the queue and we see if it is white
 
             # Estimating the direction of the crack from skeleton
 
@@ -154,7 +162,7 @@ for k in range(0, len(skeleton_frames_Pw)):
                     right_x = right_y = -1
                     continue;
                 if (skeleton_frames_Pw[k][right_x][
-                    right_y] == 255): break;  # Check the place we are if the skeleton image has something (a value of 1)in th eplace we are checking or if it is 0. If it has a value of 1, breaks (goes out of the for)
+                    right_y] == 255): break;  # Check the place we are if the skeleton image has something (a value of 1)in the place we are checking or if it is 0. If it has a value of 1, breaks (goes out of the for) and the values for right_x and _y are the distance where something was found
                 if (
                         i == 13): right_x = right_y = -1  # if the count is in the last number, it makes right x and right y equals to -1 to move to the next part of the circle
 
@@ -308,10 +316,10 @@ for k in range(0, len(skeleton_frames_Pw)):
         save_result.append(0)
         real_width = 0
     elif (len(crack_width_list) < 10):
-        real_width = round(crack_width_list[len(crack_width_list) - 1] * 0.92, 2)
+        real_width = round(crack_width_list[len(crack_width_list) - 1] * 0.92, 2) # the value for the pixel in real life is set, this has to be changed to a variable
         save_result.append(real_width)
     else:
-        real_width = round(crack_width_list[9] * 0.92, 2)
+        real_width = round(crack_width_list[9] * pixel_width, 2)
         save_result.append(real_width)
 
     print('crack width : ', real_width)
