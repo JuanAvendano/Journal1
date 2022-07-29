@@ -139,7 +139,7 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     trhs3 = red3[1][trhs30]
     ret3, thresh3 = cv2.threshold(laplacian2, trhs2, 255, cv2.THRESH_BINARY)
 
-    element='thresh'
+    element='window'
     regions = '\\_('+'window'+str(element)+'_'+str(x)+'_'+str(y)+'.xlsx'
     workbook = xlsxwriter.Workbook(path + regions)
     worksheet = workbook.add_worksheet()
