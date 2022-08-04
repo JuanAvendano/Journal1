@@ -39,7 +39,7 @@ os.chdir(path)  # Access the path
 image = cv2.imread('_DCS6695_412 - Copy.jpg')
 
 
-def CrackWidth(image):
+def CrackWidth(image,pixel_width):
     """
        Calculation of the width of a crack
 
@@ -57,8 +57,9 @@ def CrackWidth(image):
     sauvola_frames_Pw = []
 
     cropped_frames = [image]
-
-    pixel_width = 0.1
+    widthIM=image.shape[0]
+    heightIM=image.shape[1]
+    pixel_width = pixel_width
 
     for i in range(0, len(cropped_frames)):
         img = cropped_frames[i]
@@ -103,18 +104,31 @@ def CrackWidth(image):
     # 6. Detect the edges of the crack.
 
     edges_frames_Pw = []
-    edges_frames_Pl = []
+    edges_frames_LP = []
 
     for i in range(0, len(cropped_frames)):
-        edges_Pw = feature.canny(sauvola_frames_Pw[i], 0.09)  # Detects edges using Canny on the
-
+        """ FRom the original code, the edges were found using Canny edge detector but this gave a lot of error in the 
+        edges, particularly because in the end it generated vectors with different length than the widths:
+        
+        edges_Pw = feature.canny(sauvola_frames_Pw[i])  # Detects edges using Canny on the
         edges_Pw.dtype = 'uint8'
-
-
         edges_Pw *= 255
+        
+        """
+        # Edges are found using Laplacian. The edges are the negative values and for the sake of the rest of the code
+        # they are turned into positive values
+
+        thrlap = cv2.Laplacian(image, cv2.CV_64F)
+        for n in range(0, widthIM):
+            for m in range(0, heightIM):
+                if thrlap[n, m] < 0:
+                    thrlap[n, m]=255
+                else:
+                    thrlap[n, m] = 0
 
         # The list which saves the images after edge detection.
-        edges_frames_Pw.append(edges_Pw)
+        edges_Pw=thrlap
+        edges_frames_Pw.append(thrlap)
 
     # 7. Calculate the width of the crack.
     # 1) Find skeleton using BFS
@@ -151,7 +165,7 @@ def CrackWidth(image):
         len_y = skeleton_frames_Pw[k].shape[1]  # generates a value equal to the height of the skeleton image
 
         visit = np.zeros((len_x, len_y))  # generates an empty array with the same dimensions that the skeletn img
-        crack_width_list = []  # Vectr fr the elements of the crack width
+        crack_width_list = []  # Vector fr the elements of the crack width
 
         # Find out the direction of the crack from skeleton pixel.
         while (q.empty() == 0):  # Evaluates the next pixel in the queue
@@ -314,9 +328,9 @@ def CrackWidth(image):
                 if (visit[next_x][next_y] == 0):
                     q.put([next_x, next_y])  # put the evaluated x and y in the queue
                     visit[next_x][next_y] = 1  # NO MUY SEGURO
-
+        """
         # crack_width_list.sort(reverse=True)
-
+        """
         # Convert into real width.
         print(len(crack_width_list))
         if (len(crack_width_list) == 0):
@@ -342,17 +356,23 @@ def CrackWidth(image):
             save_risk.append('low')
             print('Risk group: low\n')
 
-        return crack_width_list,skeleton_frames_Pw
+
+    return crack_width_list,skeleton_coord,skeleton_Pw,edges_Pw
 
 
-list = CrackWidth(image)
-print (list)
-# # Save those information into text files.
-# f1 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\width.txt", 'w')
-# f2 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\risk.txt", 'w')
+# list,sklcoord,skframes,edgesframes = CrackWidth(image)
 #
-# for z in range(0, len(save_result)):
-#     f1.write(str(save_result[z]) + 'mm' + '\n')
+#
+# widths=np.array(list,sklcoord)
+# coordsk=np.array(sklcoord)
+# listcomplt=np.column_stack([coordsk,widths])
+#
+# # # Save those information into text files.
+# f1 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\listcomplt.txt", 'w')
+# # f2 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\risk.txt", 'w')
+# #
+# for z in range(0, len(listcomplt)):
+#     f1.write(str(listcomplt[z]) + 'mm' + '\n')
 # f1.close()
 #
 # for z in range(0, len(save_risk)):
