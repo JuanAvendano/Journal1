@@ -14,17 +14,42 @@ from PIL import Image, ImageDraw
 import os
 import cv2
 import xlsxwriter
+from Crack_width_calculation import CrackWidth
+from numpy import empty
 
 # Load an image
-path = r'C:\Users\juanc\Desktop\09 Crack 2\02.1-Cracked_predicted'
+# path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
+# os.chdir(path)  # Access the path
+# image = cv2.imread('_DCS6695_412.jpg')
+# image = cv2.imread('_DCS6695_412 - Copy.jpg')
+
+
+path = r'C:\Users\juanc\Desktop\prueba'
 os.chdir(path)  # Access the path
-image = cv2.imread('_DCS6932_194.jpg')
+image = cv2.imread('_DCS6932_193.jpg')
+
+pixel_width=0.1
+
 img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 winW = 28
 winH = 28
 
 
 def sliding_window(image, stepSize, windowSize):
+    """
+    Sliding window within the loaded image. The window corresponds to a squared window that slides across the image
+    according to the step size.
+
+     Parameters
+    ----------
+    image : ndarray
+            Image where the window will slide.
+    StepSize :  Stride for the window
+    windowSize : Size of the squared window
+
+    """
+
+
     # slide a window across the image
     for y in range(56, image.shape[0], stepSize):
         for x in range(112, image.shape[1], stepSize):
@@ -181,32 +206,91 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     plt.hist(laplacian2.ravel(), 512, [-256, 256])
     # plt.bar(red[1][:256], red[0])
     plt.subplot(2, 2, 4)
-    plt.imshow(thresh3, cmap='gray')
+    plt.imshow(thresh2, cmap='gray')
+
+    from skimage.measure import regionprops
+    from skimage.measure import label as lb
+    from skimage import measure
+
+
+    """ 
+    # threshreg = lb(thresh,connectivity=2)  # Two pixels are connected when they are neighbors and have the same value. In 2D, they can be neighbors either in a 1- or 2-connected sense.  The value refers to the maximum number of orthogonal hops to consider a  pixel/voxel a neighbor
+    # prop=regionprops(threshreg)  # Acquiring regions properties
+
+    # contours = measure.find_contours(threshreg, 0.5,'high')
+    # # Display the image and plot all contours found
+    # fig, ax = plt.subplots()
+    # ax.imshow(threshreg, cmap=plt.cm.gray)
+    #
+    # for contour in contours:
+    #     ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+    #
+    # ax.axis('image')
+    # ax.set_xticks([])
+    # ax.set_yticks([])
+    # plt.show()
+
+    """
+
+
+    widths,coordsk,skframes,edgesframes = CrackWidth(thresh,pixel_width)
+
+    width = skframes.shape[0]
+    height = skframes.shape[1]
+    # thrlap = cv2.Laplacian(thresh, cv2.CV_64F) #Laplacian of the thresholded image
+    cracks = empty([width, height, 3], dtype=np.uint8)  # creates the image with the crack obtained.
+    for n in range(0, width):
+        for m in range(0, height):
+            if skframes[n, m] > 0:          # If pixel is part of skeleton paint blue
+                cracks[n, m] = [0, 0, 255]
+            elif thresh[n, m] == 0:         # If pixel is part of crack paint yellow
+                cracks[n, m] = [255, 255, 0]
+                if edgesframes[n, m] == 255:  # If pixel is part of crack and part of edge, paint red
+                # if thrlap[n, m] == 255: #<0
+                    cracks[n, m] = [255, 0, 0]
+            elif edgesframes[n, m] == 255:     # If pixel is part of edge, paint green
+            # elif thrlap[n, m] == 255: #<0
+                cracks[n, m] = [0, 255, 0]
+            else:
+                cracks[n, m] = 0
+    plt.figure('skl+edges', figsize=(10, 10))
+    plt.imshow(cracks, cmap='gray')
+
+
+    if (len(widths) != 0 ):
+        listcomplt = np.column_stack([coordsk, widths])
+    # # Save those information into text files.
+
+        f1 = open(path+"\\listcomplt"+str(x)+"_"+str(y)+".txt", 'w')
+        for z in range(0, len(listcomplt)):
+            f1.write(str(listcomplt[z]) + 'mm' + '\n')
+        f1.close()
+
 # ======================================================================================================================
-"""CLAHE (Contrast Limited Adaptive Histogram Equalization)"""
-# create a CLAHE object (Arguments are optional).
-clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-cl1 = clahe.apply(img)
-
-plt.figure('img clahe', figsize=(10, 10))
-plt.subplot(2, 2, 1)
-plt.imshow(img, cmap='gray')
-plt.title('Image')
-
-plt.subplot(2, 2, 2)
-plt.hist(img.flatten(), 256, [0, 256], color='r')
-plt.xlim([0, 256])
-plt.legend(('histogram'), loc='upper left')
-
-plt.subplot(2, 2, 3)
-plt.imshow(cl1, cmap='gray')
-plt.title('clahe')
-
-plt.subplot(2, 2, 4)
-plt.hist(cl1.flatten(), 256, [0, 256], color='r')
-plt.xlim([0, 256])
-plt.legend(('histogram2'), loc='upper left')
-plt.show()
+# """CLAHE (Contrast Limited Adaptive Histogram Equalization)"""
+# # create a CLAHE object (Arguments are optional).
+# clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+# cl1 = clahe.apply(img)
+#
+# plt.figure('img clahe', figsize=(10, 10))
+# plt.subplot(2, 2, 1)
+# plt.imshow(img, cmap='gray')
+# plt.title('Image')
+#
+# plt.subplot(2, 2, 2)
+# plt.hist(img.flatten(), 256, [0, 256], color='r')
+# plt.xlim([0, 256])
+# plt.legend(('histogram'), loc='upper left')
+#
+# plt.subplot(2, 2, 3)
+# plt.imshow(cl1, cmap='gray')
+# plt.title('clahe')
+#
+# plt.subplot(2, 2, 4)
+# plt.hist(cl1.flatten(), 256, [0, 256], color='r')
+# plt.xlim([0, 256])
+# plt.legend(('histogram2'), loc='upper left')
+# plt.show()
 # ======================================================================================================================
 # region slide window
 
