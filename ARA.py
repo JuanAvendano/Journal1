@@ -33,6 +33,7 @@ from skimage.util import invert
 import queue
 import math
 from skimage import color
+from numpy import empty
 
 def balanced_hist_thresholding(b):
     # Starting point of histogram
@@ -81,6 +82,8 @@ trhs = balanced_hist_thresholding(red)
 ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
 
 image=thresh
+width = image.shape[0]
+height = image.shape[1]
 
 def CrackWidth(image,pixel_width):
     """
@@ -142,7 +145,19 @@ def CrackWidth(image,pixel_width):
         skeleton_Img.dtype = 'uint8'  # transform into uint8 data type being numbers from 0 to 255
 
         skeleton_Img *= 255  # multiply by 255
-
+        """
+        ESP:Cuando hay pixeles solos o grupos de pixeles que tienen una longitud menor a 5 pixeles, el algoritmo los empieza
+        a estudiar pero como tienen menos de 5 pixeles, al hacer el circulo no encuentra otro pixel del esqueleto a partir
+        del cual calcular un angulo entonces determina esa parte como vacia lo que resulta en que el vector de coordenadas
+        y el vector de widths termina siendo de diferente tamaño.  Tocaria hacer regiones y quitar las 
+        regiones que tienen menos de 5 pixeles peeero esos pixeles pueden en realidad pertenecer a una grieta de otra parte
+        en donde si conectan y hacen una linea larga y continua, es decir ocurrir que la ventana corte una grieta justo 
+        en un punto donde hay menos de 5 pixeles. Por esto para la prueba de ver las distancias calculadas
+        se quitan 3 pixeles que estan solos o que son grupos de pixeles muy cortos:
+        """
+        skeleton_Img[0][20]=0
+        skeleton_Img[0][21] = 0
+        skeleton_Img[26][0] = 0
         skeleton_frames_list.append(skeleton_Img)  # The list which saves the images after the skeleton is obtained.
 
     # 6. Detect the edges of the crack.
@@ -194,6 +209,12 @@ def CrackWidth(image,pixel_width):
 
     save_result = []
     save_risk = []
+
+    plt.figure('skl+edges', figsize=(10, 10))
+    plt.subplot(121)
+    plt.imshow(skeleton_Img)
+    plt.subplot(122)
+    plt.imshow(edges_Img)
 
     for k in range(0, len(skeleton_frames_list)):
 
@@ -251,9 +272,9 @@ def CrackWidth(image,pixel_width):
                     left_x = x
                     left_y = y
 
-                # Set the direction of the crack as angle(theta) by using acos formula
+                # Set the direction of the crack as angle(theta) by using atan formula
                 base = right_y - left_y
-                height = right_x - left_x
+                height = left_x - right_x#right_x - left_x # Since in the image the x increases going down, the order needed to be changed
                 hypotenuse = math.sqrt(base * base + height * height)
 
                 if (base == 0 and height != 0):  # If base is 0 BUT height is not 0, it means it is a vertical line thus angle is 90
@@ -261,9 +282,9 @@ def CrackWidth(image,pixel_width):
                 elif (base == 0 and height == 0):  # If base and height are 0, goes back to check the next pixel in the skeleton
                     continue
                 else:
-                    theta = math.degrees(math.acos((base * base + hypotenuse * hypotenuse - height * height) / (2.0 * base * hypotenuse)))
+                    theta = math.degrees(math.atan((height / base )))
 
-                theta += 90
+                theta += 90 #add 90 to have the perpendicular angle
                 dist = 0
 
                 # Calculate the distance if the perpendicular line meets the edge of the crack.
@@ -358,7 +379,16 @@ def CrackWidth(image,pixel_width):
 
                     dist += math.sqrt((y - pix_y) ** 2 + (x - pix_x) ** 2)
                     theta += 180
-
+                """
+                ESP:Para el calculo del width, la distancia es tomada desde el centro de los pixeles entonces en el caso
+                de un pixel de esqueleto que tiene el borde justo encima y justo debajo (donde la distancia deberia ser 1,
+                solo el pixel de esqueleto) toma medio pixel del borde superior y medio del inferior dando como resultado 
+                una distancia (y por ende un width)  de 2. Se pensaria que seria tan simple como quitarle 1 al resultado 
+                obtenido pero no porque en los casos en que la grieta no va horizontal o vertical sino que hay un angulo,
+                quitar 1 al resultado genera una medicion incorrecta. Aun no me es muy claro que hacer en este caso.
+                
+                
+                """
                 # The list which saves the width of the crack.
                 crack_width_list.append(dist)
 
@@ -402,8 +432,41 @@ def CrackWidth(image,pixel_width):
     return crack_width_list,skeleton_coord,skeleton_Img,edges_Img
 
 
-list,sklcoord,skframes,edgesframes = CrackWidth(image,0.1)
-#
+widthlist,sklcoord,skframes,edgesframes = CrackWidth(image,0.1)
+
+print(widthlist)
+print(sklcoord)
+l=len(sklcoord)
+sklwidthcoord = empty([l, 3], dtype=np.uint8)  # creates a vector with x,y coord of the skeleton and the corresponding width for that skeleton pixel
+for n in range(0, l):
+    sklwidthcoord[n][0]=sklcoord[n][0]      #First column are the x coordinate
+    sklwidthcoord[n][1] = sklcoord[n][1]    #Second column are the y coordinate
+    sklwidthcoord[n][2] = widthlist[n]      #Third column are the width calculation for that coordinate
+
+cracks = empty([width, height, 3], dtype=np.uint8)  # creates the image with the crack, skeleton and edges obtained.
+for n in range(0, width):
+    for m in range(0, height):
+        if skframes[n, m] > 0:  # If pixel is part of skeleton paint blue
+            cracks[n, m] = [0, 0, 255]
+        elif thresh[n, m] == 0:  # If pixel is part of crack paint yellow
+            cracks[n, m] = [255, 255, 0]
+            if edgesframes[n, m] == 255:  # If pixel is part of crack and part of edge, paint red
+                # if thrlap[n, m] == 255: #<0
+                cracks[n, m] = [255, 0, 0]
+        elif edgesframes[n, m] == 255:  # If pixel is part of edge, paint green
+            # elif thrlap[n, m] == 255: #<0
+            cracks[n, m] = [0, 255, 0]
+        else:
+            cracks[n, m] = 0
+
+for n in range(0, l):       # changes the values of the skeleton to the calculated width for that coordinate
+    x=sklwidthcoord[n][0]
+    y=sklwidthcoord[n][1]
+    cracks[x, y]=sklwidthcoord[n][2]
+
+
+plt.figure('skl+edges', figsize=(10, 10))
+plt.imshow(cracks, cmap='gray')
 #
 # widths=np.array(list,sklcoord)
 # coordsk=np.array(sklcoord)
