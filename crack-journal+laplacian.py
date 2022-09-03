@@ -13,7 +13,7 @@ from scipy.misc import face
 from PIL import Image, ImageDraw
 import os
 import cv2
-from Crack_width_calculation import CrackWidth
+from old_Crack_width_calculation import CrackWidth
 from numpy import empty
 
 # Load an image
