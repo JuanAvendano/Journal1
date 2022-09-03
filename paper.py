@@ -1,3 +1,7 @@
+"""
+Este  codigo esta hecho para tratar de simular los resultados del paper de referencia.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import face

@@ -13,6 +13,7 @@ from scipy.misc import face
 from PIL import Image, ImageDraw
 import os
 import cv2
+=======
 import xlsxwriter
 from Crack_width_calculation import CrackWidth
 from numpy import empty

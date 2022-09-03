@@ -1,3 +1,8 @@
+""""
+Trying to follow the procedure from my reference paper
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import face
