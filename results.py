@@ -1,43 +1,30 @@
 """
-Created on Wen march 24 2022
-
+Created on Wen august 22 2022
 @author: jca
+
 sliding window: https://pyimagesearch.com/2015/03/23/sliding-windows-for-object-detection-with-python-and-opencv/
 balanced histogram: https://theailearner.com/2019/07/19/balanced-histogram-thresholding/
+Crack width initially based on the GithHub repository: https://github-com.translate.goog/Garamda/Concrete_Crack_Detection_and_Analysis_SW?_x_tr_sl=ko&_x_tr_tl=en&_x_tr_hl=es&_x_tr_pto=wapp
 
-beta version of the crack journal+laplacian to see if by changing it, it is still ok
+
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.misc import face
-from PIL import Image, ImageDraw
 import os
 import cv2
-# from Crack_width_calculation import CrackWidth
-from numpy import empty
 import Dictionary as dict
-from skimage.morphology import label
-from skimage.morphology import remove_small_objects
 from skimage.util import invert
 
+path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 
-
-
-# Load an image
-# path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
-# os.chdir(path)  # Access the path
-# image = cv2.imread('_DCS6695_412.jpg')
-# image = cv2.imread('_DCS6695_412 - Copy.jpg')
-
-
-path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack 1'
-os.chdir(path)  # Access the path
 
 pixel_width=0.08
 winW = 28
 winH = 28
 crack=0
+
+# region crack info
 # Crack 1
 _DCS6931_078= [[168, 140], [168, 168], [168, 196], [196, 196]]
 _DCS6931_111= [[168, 0], [196, 0], [168, 28], [168, 56], [168, 84], [168, 112], [168, 140], [140,140], [140, 168], [112, 168],  [112, 196], [140, 196]]
@@ -47,11 +34,52 @@ _DCS6931_210= [[84, 0], [84, 28], [56, 56], [56, 140], [84, 140], [84, 168], [84
 _DCS6931_243= [[112, 0], [112, 28], [112, 56], [112, 84], [112, 112], [112, 140], [112, 168], [112, 196]]
 _DCS6931_276= [[196, 0]]
 
-crack1=['_DCS6931_078','_DCS6931_111','_DCS6931_144','_DCS6931_177','_DCS6931_210','_DCS6931_243','_DCS6931_276']
-WindowsCrack1=[_DCS6931_078, _DCS6931_111, _DCS6931_144, _DCS6931_177, _DCS6931_210, _DCS6931_243, _DCS6931_276]
+# Crack 2
+_DCS6932_193=[[112, 196], [196, 140], [196, 168], [168, 196], [196, 196]]
+_DCS6932_194=[[28, 56], [56, 56], [84, 56], [112, 56], [140, 56], [168, 56], [196, 56], [0, 84], [28, 84], [56, 84], [84, 84], [140, 84], [0, 112]]
+_DCS6932_195= [[0, 56], [28, 56], [56, 56], [84, 56], [112, 56], [112, 84], [140, 84], [168, 84], [196, 84], [196, 112]]
+_DCS6932_196=[[0, 112], [28, 112], [56, 112], [84, 112]]
+_DCS6932_225= [[196, 84], [168, 112], [84, 140], [112, 140], [140, 140], [84, 168], [0, 196], [28, 196], [56, 196]]
+_DCS6932_226=[[56, 0], [84, 0], [112, 0], [140, 0], [0, 28], [28, 28], [56, 28], [112, 28], [0, 56]]
 
-crack=crack1
-windows=WindowsCrack1
+# Crack 3
+_DCS6928_137= [[28, 0], [0, 28], [56, 28], [56, 56], [84, 56], [112, 84], [112, 112], [140, 112], [140, 140], [140, 168], [140, 196], [168, 196]]
+_DCS6928_170= [[168, 0], [168, 28], [168, 56], [168, 84], [168, 112], [196, 140], [196, 168], [196, 196]]
+_DCS6928_203= [[168, 0], [168, 28], [168, 56], [168, 84], [168, 112], [168, 140], [168, 168], [168, 196]]
+_DCS6928_236= [[196, 0], [196, 28], [168, 56], [196, 56], [168, 84], [196, 84], [196, 112], [196, 140], [196, 168], [196, 196]]
+_DCS6928_270= [[0, 0], [0, 28], [0, 56], [0, 84], [0, 112], [0, 140], [0, 168], [28, 168], [28, 196]]
+_DCS6928_303= [[0, 0], [28, 0], [0, 28], [28, 28], [0, 56], [0, 84], [0, 112], [0, 140], [0, 168], [0, 196]]
+_DCS6928_336= [[0, 0], [0, 28], [0, 56], [0, 84], [28, 112], [0, 140], [28, 140], [28, 168], [0, 196]]
+_DCS6928_369= [[0, 0], [0, 28], [0, 56], [0, 84], [0, 112], [0, 140]]
+
+# Crack 4
+_DCS6928_447= [[168, 168], [196, 168], [140, 196], [168, 196]]
+_DCS6928_448= [[0, 140], [28, 140], [0, 168], [28, 168], [56, 168], [84, 168], [112, 168], [140, 168], [168, 168], [196, 168]]
+_DCS6928_449= [[0, 168], [0, 196], [28, 196]]
+_DCS6928_482= [[56, 0], [84, 0], [84, 28], [112, 56], [112, 84], [140, 84], [140, 112], [168, 112]]
+_DCS6928_483= [[0, 140], [28, 140], [140, 140], [168, 140], [196, 140], [28, 168], [56, 168], [84, 168], [112, 168]]
+_DCS6928_484= [[0, 112], [28, 112], [56, 112], [0, 140], [84, 140], [112, 140], [140, 168], [168, 168], [196, 168]]
+_DCS6928_485= [[0, 168], [0, 196], [28, 196], [56, 196], [84, 196], [112, 196], [140, 196]]
+_DCS6928_486= [[56, 140], [84, 140], [112, 140], [140, 140], [168, 140], [196, 140], [28, 168], [56, 168], [0, 196], [28, 196]]
+_DCS6928_487= [[0, 112], [28, 112], [56, 112], [84, 112], [112, 112], [140, 112], [168, 112], [196, 112], [0, 140]]
+_DCS6928_488= [[0, 112], [28, 112], [28, 140]]
+_DCS6928_518= [[140, 0], [168, 0], [196, 0]]
+
+
+Crack1=['_DCS6931_078','_DCS6931_111','_DCS6931_144','_DCS6931_177','_DCS6931_210','_DCS6931_243','_DCS6931_276']
+Crack2=[ '_DCS6932_193' ,'_DCS6932_194','_DCS6932_195','_DCS6932_196','_DCS6932_225','_DCS6932_226']
+Crack3=[ '_DCS6928_137' ,'_DCS6928_170','_DCS6928_203','_DCS6928_236','_DCS6928_270','_DCS6928_303','_DCS6928_336','_DCS6928_369']
+Crack4=[ '_DCS6928_447' ,'_DCS6928_448','_DCS6928_449','_DCS6928_482','_DCS6928_483','_DCS6928_484','_DCS6928_485','_DCS6928_486','_DCS6928_487','_DCS6928_488','_DCS6928_518']
+
+WindowsCrack1=[_DCS6931_078, _DCS6931_111, _DCS6931_144, _DCS6931_177, _DCS6931_210, _DCS6931_243, _DCS6931_276]
+WindowsCrack2=[ _DCS6932_193 ,_DCS6932_194,_DCS6932_195,_DCS6932_196,_DCS6932_225,_DCS6932_226]
+WindowsCrack3=[ _DCS6928_137 ,_DCS6928_170,_DCS6928_203,_DCS6928_236,_DCS6928_270,_DCS6928_303,_DCS6928_336,_DCS6928_369]
+WindowsCrack4=[ _DCS6928_447 ,_DCS6928_448,_DCS6928_449,_DCS6928_482,_DCS6928_483,_DCS6928_484,_DCS6928_485,_DCS6928_486,_DCS6928_487,_DCS6928_488,_DCS6928_518]
+
+# endregion
+
+crack=[Crack1,Crack2,Crack3,Crack4] # list of cracks to check
+windows=[WindowsCrack1,WindowsCrack2,WindowsCrack3,WindowsCrack4] # list of windows for each subimage
 resultlis=[]
 
 def sliding_window(image, stepSize, windowSize):
@@ -112,7 +140,7 @@ def balanced_hist_thresholding(b):
 
 
 def selectimg(crack,i):
-        image = cv2.imread(crack[i]+'.jpg')
+        image = cv2.imread(crack+'.jpg')
         img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         return image,img
@@ -144,6 +172,7 @@ def joinwindows(img,windows,i):
                 xx+=1
             yy += 1
             xx=0
+
         plt.figure('window hist trsh', figsize=(10, 10))
         plt.subplot(2, 2, 1)
         plt.imshow(img)
@@ -159,46 +188,34 @@ def joinwindows(img,windows,i):
 
     return resultImg,window
 
-for i in range (0, len(crack)):
-    primera,primeraBW=selectimg(crack,i)
-    resultado,wind=joinwindows(primeraBW,windows,i)
-    resultlis.append(resultado)
-    # ====================================================================================================================================================================================================
-    """ ESP: Probablemente esta parte se puede hacer como una funcion, por el momento la dejo asi para poder ir viendo
-    que da como resultado regions o no_smllobj en caso de necesitarlo"""
-    regions0=label(resultado,connectivity=2)
-    no_smllobj = remove_small_objects(regions0, min_size=3)  # remove objects with dimensions smaller than 3 pixels
-    regions = label(no_smllobj, connectivity=2) # creates regions again after having small objects removed
-    resultImage = (regions > 0.5) * 255  # We create the binary image
-    # ====================================================================================================================================================================================================
-    resname='res2'+crack[i] # name of the image that will be saved
-    dict.imgSaving(path, resname, resultImage) #the image where small object have been removed is saved in the path
+for h in range (0,len(crack)):
+    for i in range (0, len(crack[h])):
+        pathsubfolder='\Crack '+str(h+1)    # Name of the folder where the predicted subimages detected as cracked are located
+        path2 = path + pathsubfolder        # Complete the path name with the folder name
+        os.chdir(path2)                     # Access the path
 
-    # widths: list of of widths per pixel of skeleton
-    # coordsk: List of coordinates of the skeleton's pixels
-    # skframes: Skeleton image
-    # edgesframes: Image of the edges of the crack
-    # completeList: List of results, creates a vector with x,y coord of the skeleton and the corresponding width for
-    #               that skeleton pixel and in mm according to the measure of pixel width
-    widths,coordsk,skframes,edgesframes,completeList = dict.CrackWidth(resultImage//255,pixel_width)
-    skframesname = 'skframes_' + crack[i]  # name of the skeleton image that will be saved
-    edgesframesname = 'edgesframes_' + crack[i]  # name of the edges image that will be saved
-    completeListname = 'completeList_' + crack[i]+'.txt'  # name of the image that will be saved
-    dict.imgSaving(path, skframesname, skframes)  # the image where skeleton is saved in the path
-    dict.imgSaving(path, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
-    with open(path + '//'+completeListname, "w") as output:
-        output.write(str(completeList))
+        selectedimage,imageBW=selectimg(crack[h][i],i)  # Get the subimage (selected image) and turns it into greyscale (imageBW)
+        resultado,wind=joinwindows(imageBW,windows[h],i)# Get the different windows for each subimage together to create an image with only the crack
+        resultlis.append(resultado)
+
+        resultImage=dict.cleanimage(resultado,3)    # Takes the image with only the crack and removes small objects according to the specified size
+        resname='res'+crack[h][i]                   # name of the image that will be saved
+        dict.imgSaving(path2, resname, resultImage) # The image where small object have been removed is saved in the path
+
+        # widths: list of of widths per pixel of skeleton
+        # coordsk: List of coordinates of the skeleton's pixels
+        # skframes: Skeleton image
+        # edgesframes: Image of the edges of the crack
+        # completeList: List of results, creates a vector with x,y coord of the skeleton and the corresponding width for
+        #               that skeleton pixel and in mm according to the measure of pixel width
+        widths,coordsk,skframes,edgesframes,completeList = dict.CrackWidth(resultImage//255,pixel_width)
+        skframesname = 'skframes_' + crack[h][i]  # name of the skeleton image that will be saved
+        edgesframesname = 'edgesframes_' + crack[h][i]  # name of the edges image that will be saved
+        completeListname = 'completeList_' + crack[h][i]+'.txt'  # name of the image that will be saved
+        dict.imgSaving(path2, skframesname, skframes)  # the image where skeleton is saved in the path
+        dict.imgSaving(path2, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
+        with open(path2 + '//'+completeListname, "w") as output:# saves the list as a txt file
+            output.write(str(completeList))
 
 
-    plt.figure('window hist trsh', figsize=(10, 10))
-    plt.subplot(2, 2, 1)
-    plt.imshow(primera)
-    plt.subplot(2, 2, 2)
-    plt.imshow(primeraBW, cmap='gray')
-    plt.subplot(2, 2, 3)
-    # plt.hist(window.ravel(), 256, [0, 256])
-    plt.imshow(wind)
-    plt.subplot(2, 2, 4)
-    plt.imshow(resultado, cmap='gray')
-    plt.show()
 
