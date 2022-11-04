@@ -69,7 +69,7 @@ def balanced_hist_thresholding(b):
 
 
 # Load an image
-path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
+path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack 2'
 os.chdir(path)  # Access the path
 im = cv2.imread('_DCS6932_195.jpg')  # _56_28
 img = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -81,9 +81,9 @@ trhs = balanced_hist_thresholding(red)
 # threshold the image
 ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
 
-image = thresh
-width = image.shape[0]
-height = image.shape[1]
+imagen = thresh
+width = imagen.shape[0]
+height = imagen.shape[1]
 
 
 def CrackWidth(image, pixel_width):
@@ -195,6 +195,7 @@ def CrackWidth(image, pixel_width):
     plt.imshow(skeleton_Img)
     plt.subplot(122)
     plt.imshow(edges_Img)
+
 
     for k in range(0, len(skeleton_coord)):
 
@@ -391,23 +392,14 @@ def CrackWidth(image, pixel_width):
         listcomplt[k][2] = dist
         listcomplt[k][3] = dist * pixel_width
 
-        # # Classify the danger group.
-        # if (real_width >= 0.3):
-        #     save_risk.append('high')
-        #     print('risk group : high\n')
-        # elif (real_width < 0.3 and real_width >= 0.2):
-        #     save_risk.append('medium')
-        #     print('Risk group: medium\n')
-        # else:
-        #     save_risk.append('low')
-        #     print('Risk group: low\n')
-
-
     return crack_width_list, skeleton_coord, skeleton_Img, edges_Img, listcomplt
 
 
-widthlist, sklcoord, skframes, edgesframes, resultlist = CrackWidth(image, 0.1)
+widthlist, sklcoord, skframes, edgesframes, resultlist = CrackWidth(imagen, 0.1)
 
+# # ===============================================
+# List of atributes
+# # ===============================================
 print(widthlist)
 print(sklcoord)
 l=len(sklcoord)
@@ -417,6 +409,9 @@ for n in range(0, l):
     sklwidthcoord[n][1] = sklcoord[n][1]    #Second column are the y coordinate
     sklwidthcoord[n][2] = widthlist[n]      #Third column are the width calculation for that coordinate
 
+# # ===============================================
+# Image with atributes combined
+# # ===============================================
 cracks = empty([width, height, 3], dtype=np.uint8)  # creates the image with the crack, skeleton and edges obtained.
 for n in range(0, width):
     for m in range(0, height):
@@ -432,7 +427,9 @@ for n in range(0, width):
             cracks[n, m] = [0, 255, 0]
         else:
             cracks[n, m] = 0
-
+# # ===============================================
+#
+# # ===============================================
 for n in range(0, len(sklcoord)):  # changes the values of the skeleton to the calculated width for that coordinate
     x=sklwidthcoord[n][0]
     y=sklwidthcoord[n][1]
@@ -445,19 +442,4 @@ for n in range(0, len(sklcoord)):  # changes the values of the skeleton to the c
 plt.figure('skl+edges', figsize=(10, 10))
 plt.imshow(cracks, cmap='gray')
 plt.show(block=True)
-#
-# widths=np.array(list,sklcoord)
-# coordsk=np.array(sklcoord)
-# listcomplt=np.column_stack([coordsk,widths])
-#
-# # # Save those information into text files.
-# f1 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\listcomplt.txt", 'w')
-# # f2 = open("C:\\Users\\juanc\\OneDrive - KTH\\Python\\Prueba\\risk.txt", 'w')
-# #
-# for z in range(0, len(listcomplt)):
-#     f1.write(str(listcomplt[z]) + 'mm' + '\n')
-# f1.close()
-#
-# for z in range(0, len(save_risk)):
-#     f2.write(str(save_risk[z]) + '\n')
-# f2.close()
+
