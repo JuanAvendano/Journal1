@@ -148,7 +148,7 @@ def CrackWidth(image, pixel_width):
         thrlap = cv2.Laplacian(imim, cv2.CV_64F)  # image obtained after applying Laplacian for edge detection
         for n in range(0, widthIM):
             for m in range(0, heightIM):
-                if thrlap[n, m] < 0:
+                if thrlap[n, m] > 0:
                     thrlap[n, m] = 255
                 else:
                     thrlap[n, m] = 0
@@ -167,7 +167,7 @@ def CrackWidth(image, pixel_width):
     # 3.4) Convert the number of pixels into real mm width, and classify the danger group.
 
     crack_width_list = []  # Vector fr the elements of the crack width
-    listcomplt = empty([len(skeleton_coord), 4])
+    listcomplt = empty([len(skeleton_coord), 5])
 
     # # ===============================================
     # 3.1 Circle
@@ -375,23 +375,28 @@ def CrackWidth(image, pixel_width):
         crack_width_list.append(dist)
         # creates a vector with x,y coord of the skeleton and the corresponding width for that skeleton pixel
 
-        listcomplt[k][0] = x
-        listcomplt[k][1] = y
-        listcomplt[k][2] = dist
-        listcomplt[k][3] = dist * pixel_width
+        listcomplt[k][0] = x    # X coord of the skeleton pixel
+        listcomplt[k][1] = y    # Y coord of the skeleton pixel
+        listcomplt[k][2] = dist # Width in pixels
+        listcomplt[k][3] = dist * pixel_width   # Width in mm
+        listcomplt[k][4] = 0    # Space in case danger group is used
 
-        # # Classify the danger group.
-        # if (real_width >= 0.3):
-        #     save_risk.append('high')
-        #     print('risk group : high\n')
-        # elif (real_width < 0.3 and real_width >= 0.2):
-        #     save_risk.append('medium')
-        #     print('Risk group: medium\n')
-        # else:
-        #     save_risk.append('low')
-        #     print('Risk group: low\n')
+
 
     return crack_width_list, skeleton_coord, skeleton_Img, edges_Img, listcomplt
+
+def danger_group(listcomplt):
+
+    for i in range(0,len(listcomplt)):
+        if (listcomplt[i][3] >= 0.3):
+            listcomplt[i][4]='high'
+            print('risk group : high\n')
+        elif (listcomplt[i][3] < 0.3 and listcomplt[i][3] >= 0.2):
+            listcomplt[i][4]='medium'
+            print('Risk group: medium\n')
+        else:
+            listcomplt[i][4]='low'
+            print('Risk group: low\n')
 
 def imgSaving(path, name, element):
     """
@@ -487,7 +492,7 @@ def merge_images(imlist, th, tw):
 
     return result
 
-def selectimg(crack, i):
+def selectimg(crack):
     """
        Select the image to study from a list of images
 
