@@ -16,6 +16,7 @@ from numpy import empty
 from skimage.util import invert
 import matplotlib.pyplot as plt
 from skimage.morphology import label
+from scipy.optimize import root_scalar
 from skimage.morphology import skeletonize
 from skimage.morphology import remove_small_objects
 
@@ -532,14 +533,35 @@ def sliding_window(image, stepSize, windowSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
+def instersection_gaussians(gmm, i, j):
+    """
+    Find the intersection of two Gaussian distributions fitted with a Gaussian mixture model
+
+    Parameters:
+        gmm : GaussianMixture object
+            Fitted Gaussian mixture model
+        i : int
+            Index of the first Gaussian component
+        j : int
+            Index of the second Gaussian component
+
+    Returns:
+        x_intersection : float
+            The x value at the intersection point
+    """
+    mu_i, cov_i = gmm.means_[i], gmm.covariances_[i]
+    mu_j, cov_j = gmm.means_[j], gmm.covariances_[j]
+    sigma_i = np.sqrt(cov_i)
+    sigma_j = np.sqrt(cov_j)
+    pi_i = gmm.weights_[i]
+    pi_j = gmm.weights_[j]
 
 
+    def f(x):
+        return pi_i * np.exp(-(x - mu_i) ** 2 / (2 * sigma_i ** 2)) - pi_j * np.exp(-(x - mu_j) ** 2 / (2 * sigma_j ** 2))
 
 
-
-
-
-
-
+    x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
+    return x_intersection
 
 
