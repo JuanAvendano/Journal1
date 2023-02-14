@@ -20,6 +20,8 @@ from scipy.stats import chisquare, normaltest
 from sklearn.mixture import GaussianMixture
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import root_scalar
+
 
 
 # path = r'C:\Users\juanc\Desktop\prueba'
@@ -65,7 +67,8 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     plt.hist(window.ravel(), 256, [0, 256])
     plt.subplot(2, 2, 3)
     # Plot the data and the fitted GMM
-    plt.hist(data, bins=50, density=True)
+    bi=(data.max()-data.min())
+    plt.hist(data, bins=bi, density=True)
     a = np.linspace(data.min(), data.max(), (data.max()-data.min()))
     for mean, std in zip(means, stds):
         plt.plot(a, gmm.weights_[0]*np.exp(-(a-mean)**2/(2*std**2))/(std*np.sqrt(2*np.pi)))
