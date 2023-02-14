@@ -54,6 +54,12 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     means = gmm.means_.flatten()
     stds = np.sqrt(gmm.covariances_).flatten()
 
+    #cutting point is 1 or 2 stds from each mean, from the left one it is adding and on the right it is subtracting.
+    LowBound1 = means[0]-stds[0]
+    LowBound2 = means[0] - 2*stds[0]
+
+    UpBound1 = means[1]+stds[1]
+    UpBound2 = means[1] + 2*stds[1]
 
     # Plot the image with the window, the pixels in the window, histogram of the window
     plt.figure('window hist trsh', figsize=(10, 10))
@@ -69,6 +75,7 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     a = np.linspace(data.min(), data.max(), (data.max()-data.min()))
     for mean, std in zip(means, stds):
         plt.plot(a, gmm.weights_[0]*np.exp(-(a-mean)**2/(2*std**2))/(std*np.sqrt(2*np.pi)))
+    plt.plot(LowBound1)
     plt.subplot(2, 2, 4)
     sns.distplot(window.ravel(), fit=norm, kde=False,label="Density", norm_hist=False  )
     plt.show()
