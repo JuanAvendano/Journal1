@@ -1,7 +1,7 @@
 """
 Created on january 30 2023
 @author: jca
-
+Code to use Gaussian Mixture Models (GMM) to fit two Gaussian distributions on the data for each window.
 
 """
 
@@ -44,12 +44,7 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     red = np.histogram(window.ravel(), bins=256, range=[0, 256])
     clone = img.copy()
     # Creates rectangle in the coordinates over the clone to see it in the ploted image
-    # cv2.rectangle(clone, (a, b), (a + winW, b + winH), (0, 255, 0), 2)
     cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
-
-    # Generate data for a bimodal distribution
-    # np.random.seed(0)
-    # data = np.concatenate([np.random.normal(2, 1, 400), np.random.normal(6, 1, 400)])
 
     # Fit a GMM with two components to the data
     gmm = GaussianMixture(n_components=2)
