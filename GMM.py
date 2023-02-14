@@ -41,7 +41,7 @@ winH = 28
 
 for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     data=window.ravel()
-    red = np.histogram(window.ravel(), bins=256, range=[0, 256])
+    red = np.histogram(data, bins=255, range=[0, 255])
     clone = img.copy()
     # Creates rectangle in the coordinates over the clone to see it in the ploted image
     cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
@@ -54,6 +54,11 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     means = gmm.means_.flatten()
     stds = np.sqrt(gmm.covariances_).flatten()
 
+    #cutting point is 1 or 2 stds from each mean, from the left one it is adding and on the right it is subtracting.
+    LowBound1 = means[0]-stds[0]
+    LowBound2 = means[0] - 2*stds[0]
+    UpBound1 = means[1]+stds[1]
+    UpBound2 = means[1] + 2*stds[1]
 
     # Plot the image with the window, the pixels in the window, histogram of the window
     plt.figure('window hist trsh', figsize=(10, 10))
@@ -65,10 +70,17 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     plt.hist(window.ravel(), 256, [0, 256])
     plt.subplot(2, 2, 3)
     # Plot the data and the fitted GMM
-    plt.hist(data, bins=50, density=True)
+    bi = (data.max()-data.min())
+    plt.hist(data, bins=bi, density=True)
     a = np.linspace(data.min(), data.max(), (data.max()-data.min()))
     for mean, std in zip(means, stds):
         plt.plot(a, gmm.weights_[0]*np.exp(-(a-mean)**2/(2*std**2))/(std*np.sqrt(2*np.pi)))
+    #add cutting lines corresponding to 1 or 2 stdv from each mean
+    plt.axvline(x=LowBound1, color='red', linestyle='--')
+    plt.axvline(x=LowBound2, color='orange', linestyle='--')
+    plt.axvline(x=UpBound1, color='green', linestyle='--')
+    plt.axvline(x=UpBound2, color='cyan', linestyle='--')
+    # Fitting a normal distribution to the whole set
     plt.subplot(2, 2, 4)
-    sns.distplot(window.ravel(), fit=norm, kde=False,label="Density", norm_hist=False  )
+    sns.distplot(data, fit=norm, kde=False,label="Density", norm_hist=False  )
     plt.show()
