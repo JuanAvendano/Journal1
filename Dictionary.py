@@ -561,7 +561,7 @@ def instersection_gaussians(gmm, i, j):
         return pi_i * np.exp(-(x - mu_i) ** 2 / (2 * sigma_i ** 2)) - pi_j * np.exp(-(x - mu_j) ** 2 / (2 * sigma_j ** 2))
 
 
-    x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
+    x_intersection = root_scalar(f, bracket=[mu_j - 3*sigma_j, mu_i + 3*sigma_i]).root
     return x_intersection
 
 

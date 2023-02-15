@@ -15,6 +15,7 @@ from skimage.util import invert
 import math
 from numpy import empty
 from Dictionary import sliding_window
+from Dictionary import instersection_gaussians
 import seaborn as sns
 from scipy.stats import chisquare, normaltest
 from sklearn.mixture import GaussianMixture
@@ -53,6 +54,8 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     # Extract the means and standard deviations of the two Gaussian components
     means = gmm.means_.flatten()
     stds = np.sqrt(gmm.covariances_).flatten()
+    # Determine the intersection point for the 2 Gaussians
+    x_intersec = instersection_gaussians(gmm,0,1)
 
 
     # Plot the image with the window, the pixels in the window, histogram of the window
@@ -65,10 +68,14 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     plt.hist(window.ravel(), 256, [0, 256])
     plt.subplot(2, 2, 3)
     # Plot the data and the fitted GMM
-    plt.hist(data, bins=50, density=True)
+    bi=(data.max()-data.min())
+    plt.hist(data, bins=bi, density=True)
     a = np.linspace(data.min(), data.max(), (data.max()-data.min()))
     for mean, std in zip(means, stds):
         plt.plot(a, gmm.weights_[0]*np.exp(-(a-mean)**2/(2*std**2))/(std*np.sqrt(2*np.pi)))
+    # add cutting lines corresponding to the intersection of the Gaussians
+    plt.axvline(x=x_intersec, color='red', linestyle='--')
+    # Fitting a normal distribution to the whole set
     plt.subplot(2, 2, 4)
     sns.distplot(window.ravel(), fit=norm, kde=False,label="Density", norm_hist=False  )
     plt.show()
