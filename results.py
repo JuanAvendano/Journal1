@@ -17,6 +17,9 @@ import Dictionary as dict
 from skimage.util import invert
 from numpy import empty
 
+import time
+
+start_time = time.time()
 
 path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 
@@ -207,41 +210,6 @@ def sliding_window(image, stepSize, windowSize):
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
 
-def balanced_hist_thresholding(b):
-    # Starting point of histogram
-    i_s = np.min(np.where(b[0] > 0))
-    # End point of histogram
-    i_e = np.max(np.where(b[0] > 0))
-    # Center of histogram
-    i_m = (i_s + i_e) // 2
-    # Left side weight
-    w_l = np.sum(b[0][0:i_m + 1])
-    # Right side weight
-    w_r = np.sum(b[0][i_m + 1:i_e + 1])
-    # Until starting point not equal to endpoint
-    while (i_s != i_e):
-        # If right side is heavier
-        if (w_r > w_l):
-            # Remove the end weight
-            w_r -= b[0][i_e]
-            i_e -= 1
-            # Adjust the center position and recompute the weights
-            if ((i_s + i_e) // 2) < i_m:
-                w_l -= b[0][i_m]
-                w_r += b[0][i_m]
-                i_m -= 1
-        else:
-            # If left side is heavier, remove the starting weight
-            w_l -= b[0][i_s]
-            i_s += 1
-            # Adjust the center position and recompute the weights
-            if ((i_s + i_e) // 2) >= i_m:
-                w_l += b[0][i_m + 1]
-                w_r -= b[0][i_m + 1]
-                i_m += 1
-    return i_m
-
-
 def selectimg(crack,i):
         image = cv2.imread(crack+'.jpg')
         img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -256,10 +224,11 @@ def joinwindows(img,windows,i):
         x=windows[i][j][0]                      # x coordinate of the upper left corner of the window to evaluate
         y=windows[i][j][1]                      # y coordinate of the upper left corner of the window to evaluate
         window = img[y:y + winH, x:x + winW]  # window to evaluate from x and y coord
-        red = np.histogram(window.ravel(), bins=256, range=[0, 256])   # hist for the window
+        WinData = window.ravel()
+        red = np.histogram(WinData, bins=256, range=[0, 256])   # hist for the window
         cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)    # rectangle to see where we are in the image
 
-        trhs = balanced_hist_thresholding(red)
+        Outl, med, medlist, inliers,trhs = dict.detect_outliers_mad(WinData)
     # ====================================================================================================================================================================================================
     #     if i==1 and j==6:
     #         trhs=55
@@ -295,6 +264,7 @@ for h in range (0,len(crack)):
     for i in range (0, len(crack[h])):
         pathsubfolder='\Crack '+str(h+1)    # Name of the folder where the predicted subimages detected as cracked are located
         path2 = path + pathsubfolder        # Complete the path name with the folder name
+        path3=path2+'\MAD'
         os.chdir(path2)                     # Access the path
 
         selectedimage,imageBW=selectimg(crack[h][i],i)  # Get the subimage (selected image) and turns it into greyscale (imageBW)
@@ -315,10 +285,11 @@ for h in range (0,len(crack)):
         edgesframesname = 'edgesframes_' + crack[h][i]  # name of the edges image that will be saved
         completeListname = 'completeList_' + crack[h][i]+'.txt'  # name of the image that will be saved
 
-        # dict.imgSaving(path2, resname,resultImage)  # The image where small object have been removed is saved in the path
-        # dict.imgSaving(path2, skframesname, skframes)  # the image where skeleton is saved in the path
-        # dict.imgSaving(path2, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
-        with open(path2 + '//'+completeListname, "w") as output:# saves the list as a txt file
+        os.chdir(path3)
+        dict.imgSaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
+        dict.imgSaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
+        dict.imgSaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
+        with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
             output.write(str(completeList))
 
         # Image with the crack obtained.
@@ -337,7 +308,13 @@ for h in range (0,len(crack)):
 
                 else:
                     finalsubimg[x, y] = selectedimage[x, y]
-        # finalsubimgname = '' + crack[h][i]  # name of the edges image that will be saved
-        # dict.imgSaving(path2, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
+        finalsubimgname = 'finalsubimgname' + crack[h][i]  # name of the edges image that will be saved
+        dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
         plt.figure('final sub Image', figsize=(10, 10))
         plt.imshow(finalsubimg)
+
+
+end_time = time.time()
+
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.2f} seconds")
