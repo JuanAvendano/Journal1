@@ -564,4 +564,12 @@ def instersection_gaussians(gmm, i, j):
     x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
     return x_intersection
 
-
+def detect_outliers_mad(data, threshold=3.5):
+    median = np.median(data)
+    mad = np.median(np.abs(data - median))
+    lower_bound = median - threshold * mad
+    upper_bound = median + threshold * mad
+    outliers = [x for x in data if x < lower_bound or x > upper_bound]
+    medianlist = [x for x in data if x == median ]
+    inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
+    return outliers, median, medianlist, inliers, lower_bound
