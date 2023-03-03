@@ -27,7 +27,7 @@ def detect_outliers_mad(data, threshold=2):
     outliers = [x for x in data if x < lower_bound or x > upper_bound]
     medianlist = [x for x in data if x == median ]
     inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
-    return outliers, median, medianlist, inliers
+    return outliers, median, medianlist, inliers, lower_bound
 
 
 path = r'C:\Users\juanc\OneDrive - KTH\Python\Prueba\02.1-Cracked_predicted'
@@ -48,7 +48,7 @@ for (x, y, window) in sliding_window(img, stepSize=28, windowSize=(winW, winH)):
     cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
 
     # Detect Outliers using MAD
-    Outl, med, medlist, inliers = detect_outliers_mad(WinData)
+    Outl, med, medlist, inliers,low_bound = detect_outliers_mad(WinData)
     if x==112 and y==28:
         # Plot the image with the window, the pixels in the window, histogram of the window
         plt.figure('window hist trsh', figsize=(19, 10))
