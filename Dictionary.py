@@ -418,7 +418,7 @@ def imgSaving(path, name, element):
 
 def joinwindows(img, windows, i, winH, winW):
     """
-       Joins the different windows of an image where cracks have been detected and generates a result image where the
+       Joins the different windows (not subimages) of an image where cracks have been detected and generates a result image where the
        the thresholded images can be seen together
 
     Parameters
