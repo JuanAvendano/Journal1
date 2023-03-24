@@ -11,7 +11,7 @@ import os
 import cv2
 import math
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from numpy import empty
 from skimage.util import invert
 import matplotlib.pyplot as plt
@@ -418,7 +418,7 @@ def imgSaving(path, name, element):
 
 def joinwindows(img, windows, i, winH, winW):
     """
-       Joins the different windows of an image where cracks have been detected and generates a result image where the
+       Joins the different windows (not subimages) of an image where cracks have been detected and generates a result image where the
        the thresholded images can be seen together
 
     Parameters
@@ -460,36 +460,89 @@ def joinwindows(img, windows, i, winH, winW):
 
     return resultImg, window
 
-def merge_images(imlist, th, tw):
+def merge_images(imlist, nr, nc):
     """
-        Merge two images into one, displayed side by side
+        Merge subimages into one, displayed according to the number of columns and rows given as input
 
     Parameters
     ----------
-    :param imlist: List of sliced pictures to stich together
-    :param th: Height of result image
-    :param tw: Width of result image
+    :param imlist: List of sliced pictures to stich together. All the images must be same size
+    :param nr: number of rows of result image
+    :param nc: number of columns of result image
 
     Returns
     -------
     :return: the merged Image object
 
     """
-    result = Image.new('RGB', (tw, th))
-    CW = 0  # Counter for the width
-    CH = 0  # Counter for the height
-    for x in range(len(imlist)):
-        imx = Image.open(imlist[x])
-        (wx, hx) = imx.size
+    images = [Image.open(path) for path in imlist]
 
-        if CW < tw:
-            result.paste(im=imx, box=(CW, CH))
-            CW = CW + wx
-        else:
-            CW = 0
-            CH = CH + hx
-            result.paste(im=imx, box=(CW, CH))
-            CW = CW + wx
+    # Get dimensions of result image
+    widths, heights = zip(*(i.size for i in images))
+    result_width = max(widths) * nc
+    result_height = max(heights) * nr
+
+    result = Image.new('RGB', (result_width, result_height))    # Create new Image
+    # Paste subimages into result image
+    for row in range(nr):
+        for col in range(nc):
+            index = row * nc + col
+            if index >= len(images):
+                break
+            image = images[index]
+            x_offset = col * max(widths)
+            y_offset = row * max(heights)
+            result.paste(image, (x_offset, y_offset))
+
+    return result
+
+def merge_images_with_labels(imlist, nr, nc):
+    """
+        Merge subimages into one with divisions for the subimages used and the name of the subimages over each
+        subimage. The final image is displayed according to the number of columns and rows given as input
+
+    Parameters
+    ----------
+    :param imlist: List of sliced pictures to stich together. All the images must be same size
+    :param nr: number of rows of result image
+    :param nc: number of columns of result image
+
+    Returns
+    -------
+    :return: the merged Image object
+
+    """
+    images = [Image.open(path) for path in imlist]
+
+    # Get dimensions of result image
+    widths, heights = zip(*(i.size for i in images))
+    result_width = max(widths) * nc
+    result_height = max(heights) * nr
+
+    result = Image.new('RGB', (result_width, result_height))    # Create new Image
+    # Paste subimages into result image
+    for row in range(nr):
+        for col in range(nc):
+            index = row * nc + col
+            if index >= len(images):
+                break
+            image = images[index]
+            x_offset = col * max(widths)
+            y_offset = row * max(heights)
+            result.paste(image, (x_offset, y_offset))
+            # Draw bounding box around image
+            draw = ImageDraw.Draw(result)
+            draw.rectangle((x_offset, y_offset, x_offset + image.width, y_offset + image.height), outline='white')
+
+            # Add label on top of image
+            label = f"{imlist[index].split('_')[-1].split('.')[0]}"
+            font = ImageFont.truetype("arial.ttf", 20)
+            text_width, text_height = draw.textsize(label, font)
+            text_x = x_offset + (image.width - text_width) // 2
+            text_y = y_offset + text_height - 5
+            draw.rectangle((text_x - 5, text_y - 5, text_x + text_width + 5, text_y + text_height + 5),
+                           fill=(0, 0, 0, 128))
+            draw.text((text_x, text_y), label, font=font, fill='white')
 
     return result
 
@@ -564,4 +617,12 @@ def instersection_gaussians(gmm, i, j):
     x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
     return x_intersection
 
-
+def detect_outliers_mad(data, threshold=3.5):
+    median = np.median(data)
+    mad = np.median(np.abs(data - median))
+    lower_bound = median - threshold * mad
+    upper_bound = median + threshold * mad
+    outliers = [x for x in data if x < lower_bound or x > upper_bound]
+    medianlist = [x for x in data if x == median ]
+    inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
+    return outliers, median, medianlist, inliers, lower_bound
