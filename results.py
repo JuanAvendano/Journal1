@@ -268,7 +268,7 @@ for h in range (0,len(crack)):
         os.chdir(path2)                     # Access the path
 
         selectedimage,imageBW=selectimg(crack[h][i],i)  # Get the subimage (selected image) and turns it into greyscale (imageBW)
-        resultado,wind=joinwindows(imageBW,windows[h],i)# Get the different windows for each subimage together to create an image with only the crack
+        resultado,wind=dict.joinwindows(imageBW,windows[h],i,winH,winW,1)# Get the different windows for each subimage together to create an image with only the crack
         resultlis.append(resultado)
         resultImage=dict.cleanimage(resultado,3)    # Takes the image with only the crack and removes small objects according to the specified size
 
