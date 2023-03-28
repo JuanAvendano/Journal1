@@ -28,7 +28,7 @@ pixel_width=0.08
 winW = 28
 winH = 28
 method_threshold=2.5    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-
+save_info=False
 crack=0
 
 # region crack info
@@ -223,12 +223,14 @@ for h in range (0,len(crack)):
         edgesframesname = 'edgesframes_' + crack[h][i]  # name of the edges image that will be saved
         completeListname = 'completeList_' + crack[h][i]+'.txt'  # name of the image that will be saved
 
-        os.chdir(path3)
-        dict.imgSaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
-        dict.imgSaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
-        dict.imgSaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
-        with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
-            output.write(str(completeList))
+        # If the image without small object, skeletons, edges and lists want to be saved
+        if save_info==True:
+            os.chdir(path3)
+            dict.imgSaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
+            dict.imgSaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
+            dict.imgSaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
+            with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
+                output.write(str(completeList))
 
         # Image with the crack obtained.
         # ===============================================
@@ -246,10 +248,14 @@ for h in range (0,len(crack)):
 
                 else:
                     finalsubimg[x, y] = selectedimage[x, y]
+
         finalsubimgname = 'finalsubimgname' + crack[h][i]  # name of the edges image that will be saved
-        dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
         plt.figure('final sub Image', figsize=(10, 10))
         plt.imshow(finalsubimg)
+        # If the final subimage want to be saved
+        if save_info == True:
+            dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
+
 
 
 end_time = time.time()
