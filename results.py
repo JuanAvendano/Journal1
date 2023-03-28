@@ -27,6 +27,8 @@ path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 pixel_width=0.08
 winW = 28
 winH = 28
+method_threshold=2.5    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+
 crack=0
 
 # region crack info
@@ -188,87 +190,23 @@ windows=[WindowsCrack1,WindowsCrack2,WindowsCrack3,WindowsCrack4,WindowsCrack5,W
 
 resultlis=[]
 
-def sliding_window(image, stepSize, windowSize):
-    """
-    Sliding window within the loaded image. The window corresponds to a squared window that slides across the image
-    according to the step size.
 
-     Parameters
-    ----------
-    image : ndarray
-            Image where the window will slide.
-    StepSize :  Stride for the window
-    windowSize : Size of the squared window
-
-    """
-
-
-    # slide a window across the image
-    for y in range(56, image.shape[0], stepSize):
-        for x in range(28, image.shape[1], stepSize):
-            # yield the current window
-            yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
-
-
-def selectimg(crack,i):
-        image = cv2.imread(crack+'.jpg')
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        return image,img
-
-def joinwindows(img,windows,i):
-    resultImg = img.copy() * 0
-    clone = img.copy()
-
-    for j in range(0, len(windows[i])):
-        x=windows[i][j][0]                      # x coordinate of the upper left corner of the window to evaluate
-        y=windows[i][j][1]                      # y coordinate of the upper left corner of the window to evaluate
-        window = img[y:y + winH, x:x + winW]  # window to evaluate from x and y coord
-        WinData = window.ravel()
-        red = np.histogram(WinData, bins=256, range=[0, 256])   # hist for the window
-        cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)    # rectangle to see where we are in the image
-
-        Outl, med, medlist, inliers,trhs = dict.detect_outliers_mad(WinData)
-    # ====================================================================================================================================================================================================
-    #     if i==1 and j==6:
-    #         trhs=55
-    # ====================================================================================================================================================================================================
-        ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
-        thresh=invert(thresh)
-        xx = 0
-        yy = 0
-        for k in range(x, x+window.shape[1]):
-
-            for l in range(y, y+window.shape[0]):
-                resultImg[l,k]=thresh[xx,yy]
-                xx+=1
-            yy += 1
-            xx=0
-
-        plt.figure('window hist trsh', figsize=(10, 10))
-        plt.subplot(2, 2, 1)
-        plt.imshow(clone)
-        plt.subplot(2, 2, 2)
-        plt.imshow(window, cmap='gray')
-        plt.subplot(2, 2, 3)
-        plt.hist(window.ravel(), 256, [0, 256])
-        # plt.imshow(clone)
-        plt.subplot(2, 2, 4)
-        plt.imshow(resultImg, cmap='gray')
-
-
-
-    return resultImg,window
 
 for h in range (0,len(crack)):
     for i in range (0, len(crack[h])):
         pathsubfolder='\Crack '+str(h+1)    # Name of the folder where the predicted subimages detected as cracked are located
         path2 = path + pathsubfolder        # Complete the path name with the folder name
-        path3=path2+'\MAD'
+        pathMAD=path2+'\MAD'
+        pathBHist = path2 + '\Balanced'
+        if method_threshold==0:
+            path3=pathBHist
+        else:
+            path3 = pathMAD
+
         os.chdir(path2)                     # Access the path
 
-        selectedimage,imageBW=selectimg(crack[h][i],i)  # Get the subimage (selected image) and turns it into greyscale (imageBW)
-        resultado,wind=dict.joinwindows(imageBW,windows[h],i,winH,winW,1)# Get the different windows for each subimage together to create an image with only the crack
+        selectedimage,imageBW=dict.selectimg(crack[h][i])  # Get the subimage (selected image) and turns it into greyscale (imageBW)
+        resultado,wind=dict.joinwindows(imageBW,windows[h],i,winH,winW,method_threshold)# Get the different windows for each subimage together to create an image with only the crack
         resultlis.append(resultado)
         resultImage=dict.cleanimage(resultado,3)    # Takes the image with only the crack and removes small objects according to the specified size
 
