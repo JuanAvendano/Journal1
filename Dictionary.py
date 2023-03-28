@@ -416,7 +416,7 @@ def imgSaving(path, name, element):
     name = name + '.jpg'
     cv2.imwrite(os.path.join(path, name), element)  # saves the obtained image showing as a .jpg in the folder
 
-def joinwindows(img, windows, i, winH, winW):
+def joinwindows(img, windows, i, winH, winW,method):
     """
        Joins the different windows (not subimages) of an image where cracks have been detected and generates a result image where the
        the thresholded images can be seen together
@@ -443,11 +443,19 @@ def joinwindows(img, windows, i, winH, winW):
         x = windows[i][j][0]  # x coordinate of the upper left corner of the window to evaluate
         y = windows[i][j][1]  # y coordinate of the upper left corner of the window to evaluate
         window = img[y:y + winH, x:x + winW]  # window to evaluate from x and y coord
+        WinData = window.ravel()
         red = np.histogram(window.ravel(), bins=256, range=[0, 256])  # hist for the window
         cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)  # rectangle to see where we are in the image
 
-        trhs = balanced_hist_thresholding(red)
+        if method==0:
+            trhs = balanced_hist_thresholding(red)
+        elif method==1:
+            Outl, med, medlist, inliers, trhs = detect_outliers_mad(WinData)
+        else:
+            print("method must be one of two options, 0 for balanced histogram or 1 for MAD")
+
         ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
+        thresh=invert(thresh)
         xx = 0
         yy = 0
         for k in range(x, x + window.shape[1]):
@@ -553,7 +561,6 @@ def selectimg(crack):
     Parameters
     ----------
     :param crack:
-    :param  i:
 
     Returns
     -------
@@ -617,7 +624,7 @@ def instersection_gaussians(gmm, i, j):
     x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
     return x_intersection
 
-def detect_outliers_mad(data, threshold=3.5):
+def detect_outliers_mad(data, threshold=2.5):
     median = np.median(data)
     mad = np.median(np.abs(data - median))
     lower_bound = median - threshold * mad
