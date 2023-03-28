@@ -399,6 +399,35 @@ def danger_group(listcomplt):
             listcomplt[i][4]='low'
             print('Risk group: low\n')
 
+def detect_outliers_mad(data, threshold):
+    """
+       Takes a the image to analyze as a 1D array and uses Median Absolute Deviation to determine the outliers using
+       a threshold that describes a distance from the median of the array. The usual value for the threshold is 3.5
+       since it corresponds roughly to the 99.7th percentile of the standard normal distribution.
+
+    Parameters
+    ----------
+    :param data: 1D array of intensity values
+    :param threshold: Threshold for MAD method
+
+    Returns
+    -------
+    outliers : List of elements considered as outliers.
+    median : Median of the data
+    medianlist: Elements from the data being the median
+    inliers: List of elements considered as inliers
+    lower_bound: Lower cutting point to divide inliers and outliers
+
+    """
+    median = np.median(data)
+    mad = np.median(np.abs(data - median))
+    lower_bound = median - threshold * mad
+    upper_bound = median + threshold * mad
+    outliers = [x for x in data if x < lower_bound or x > upper_bound]
+    medianlist = [x for x in data if x == median ]
+    inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
+    return outliers, median, medianlist, inliers, lower_bound
+
 def imgSaving(path, name, element):
     """
         Saves an obtained image into a specified directory
@@ -416,7 +445,38 @@ def imgSaving(path, name, element):
     name = name + '.jpg'
     cv2.imwrite(os.path.join(path, name), element)  # saves the obtained image showing as a .jpg in the folder
 
-def joinwindows(img, windows, i, winH, winW,method):
+def instersection_gaussians(gmm, i, j):
+    """
+    Find the intersection of two Gaussian distributions fitted with a Gaussian mixture model
+
+    Parameters:
+        gmm : GaussianMixture object
+            Fitted Gaussian mixture model
+        i : int
+            Index of the first Gaussian component
+        j : int
+            Index of the second Gaussian component
+
+    Returns:
+        x_intersection : float
+            The x value at the intersection point
+    """
+    mu_i, cov_i = gmm.means_[i], gmm.covariances_[i]
+    mu_j, cov_j = gmm.means_[j], gmm.covariances_[j]
+    sigma_i = np.sqrt(cov_i)
+    sigma_j = np.sqrt(cov_j)
+    pi_i = gmm.weights_[i]
+    pi_j = gmm.weights_[j]
+
+
+    def f(x):
+        return pi_i * np.exp(-(x - mu_i) ** 2 / (2 * sigma_i ** 2)) - pi_j * np.exp(-(x - mu_j) ** 2 / (2 * sigma_j ** 2))
+
+
+    x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
+    return x_intersection
+
+def joinwindows(img, windows, i, winH, winW,threshold):
     """
        Joins the different windows (not subimages) of an image where cracks have been detected and generates a result image where the
        the thresholded images can be seen together
@@ -428,6 +488,7 @@ def joinwindows(img, windows, i, winH, winW,method):
     :param i: counter from the list of images to check
     :param winH: Height of the window to study
     :param winW: Width of the window to study
+    :param threshold: Threshold for MAD method, 0 if Balanced threshold is selected
 
     Returns
     -------
@@ -447,12 +508,11 @@ def joinwindows(img, windows, i, winH, winW,method):
         red = np.histogram(window.ravel(), bins=256, range=[0, 256])  # hist for the window
         cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)  # rectangle to see where we are in the image
 
-        if method==0:
+        if threshold==0:
             trhs = balanced_hist_thresholding(red)
-        elif method==1:
-            Outl, med, medlist, inliers, trhs = detect_outliers_mad(WinData)
-        else:
-            print("method must be one of two options, 0 for balanced histogram or 1 for MAD")
+        else :
+            Outl, med, medlist, inliers, trhs = detect_outliers_mad(WinData,threshold)
+
 
         ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
         thresh=invert(thresh)
@@ -593,43 +653,6 @@ def sliding_window(image, stepSize, windowSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
-def instersection_gaussians(gmm, i, j):
-    """
-    Find the intersection of two Gaussian distributions fitted with a Gaussian mixture model
-
-    Parameters:
-        gmm : GaussianMixture object
-            Fitted Gaussian mixture model
-        i : int
-            Index of the first Gaussian component
-        j : int
-            Index of the second Gaussian component
-
-    Returns:
-        x_intersection : float
-            The x value at the intersection point
-    """
-    mu_i, cov_i = gmm.means_[i], gmm.covariances_[i]
-    mu_j, cov_j = gmm.means_[j], gmm.covariances_[j]
-    sigma_i = np.sqrt(cov_i)
-    sigma_j = np.sqrt(cov_j)
-    pi_i = gmm.weights_[i]
-    pi_j = gmm.weights_[j]
 
 
-    def f(x):
-        return pi_i * np.exp(-(x - mu_i) ** 2 / (2 * sigma_i ** 2)) - pi_j * np.exp(-(x - mu_j) ** 2 / (2 * sigma_j ** 2))
 
-
-    x_intersection = root_scalar(f, bracket=[mu_i - 3 * sigma_i, mu_j + 3 * sigma_j]).root
-    return x_intersection
-
-def detect_outliers_mad(data, threshold=2.5):
-    median = np.median(data)
-    mad = np.median(np.abs(data - median))
-    lower_bound = median - threshold * mad
-    upper_bound = median + threshold * mad
-    outliers = [x for x in data if x < lower_bound or x > upper_bound]
-    medianlist = [x for x in data if x == median ]
-    inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
-    return outliers, median, medianlist, inliers, lower_bound
