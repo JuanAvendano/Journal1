@@ -387,7 +387,19 @@ def CrackWidth(image, pixel_width):
     return crack_width_list, skeleton_coord, skeleton_Img, edges_Img, listcomplt
 
 def danger_group(listcomplt):
+    """
+          Defines a danger group for a certain crack depending on the width. The limits correspond to high if the crack
+          width is bigger than 0.3mm, medium if it is between 0.2 and 0.3 and low if it is less tha 0.2mm.
+          Changes the lisst 5th column to the corresponding danger group.
 
+       Parameters
+       ----------
+       :param listcomplt: List of cracks with their corresponding widths. The widths must be in the fourth column
+
+       Returns
+       -------
+
+       """
     for i in range(0,len(listcomplt)):
         if (listcomplt[i][3] >= 0.3):
             listcomplt[i][4]='high'
@@ -401,7 +413,7 @@ def danger_group(listcomplt):
 
 def detect_outliers_mad(data, threshold):
     """
-       Takes a the image to analyze as a 1D array and uses Median Absolute Deviation to determine the outliers using
+       Takes the image to analyze as a 1D array and uses Median Absolute Deviation to determine the outliers using
        a threshold that describes a distance from the median of the array. The usual value for the threshold is 3.5
        since it corresponds roughly to the 99.7th percentile of the standard normal distribution.
 
@@ -478,8 +490,9 @@ def instersection_gaussians(gmm, i, j):
 
 def joinwindows(img, windows, i, winH, winW,threshold):
     """
-       Joins the different windows (not subimages) of an image where cracks have been detected and generates a result image where the
-       the thresholded images can be seen together
+       Takes windows (list of windows) from a subimage (can be multiple subimages in a list), apply a threshold method
+       and puts all the windows results together in their corresponding place in the subimage. The result is a binary
+       image, the results will be added to the original image after calculating widths lenghts and others.
 
     Parameters
     ----------
@@ -530,7 +543,7 @@ def joinwindows(img, windows, i, winH, winW,threshold):
 
 def merge_images(imlist, nr, nc):
     """
-        Merge subimages into one, displayed according to the number of columns and rows given as input
+        Merge subimages into one, displayed according to the number of columns and rows given as input.
 
     Parameters
     ----------
@@ -550,7 +563,9 @@ def merge_images(imlist, nr, nc):
     result_width = max(widths) * nc
     result_height = max(heights) * nr
 
-    result = Image.new('RGB', (result_width, result_height))    # Create new Image
+    # Create new Image
+    result = Image.new('RGB', (result_width, result_height))
+
     # Paste subimages into result image
     for row in range(nr):
         for col in range(nc):
@@ -567,7 +582,8 @@ def merge_images(imlist, nr, nc):
 def merge_images_with_labels(imlist, nr, nc):
     """
         Merge subimages into one with divisions for the subimages used and the name of the subimages over each
-        subimage. The final image is displayed according to the number of columns and rows given as input
+        subimage. The name corresponds to the last part of the subimage file name.
+        The final image is displayed according to the number of columns and rows given as input
 
     Parameters
     ----------
@@ -616,7 +632,7 @@ def merge_images_with_labels(imlist, nr, nc):
 
 def selectimg(crack):
     """
-       Select the image to study from a list of images
+       Select the image to study from a list of images and returns the image in grayscale
 
     Parameters
     ----------
