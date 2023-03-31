@@ -16,8 +16,8 @@ import cv2
 import Dictionary as dict
 from skimage.util import invert
 from numpy import empty
-
 import time
+import glob
 
 start_time = time.time()
 
@@ -28,7 +28,7 @@ pixel_width=0.08
 winW = 28
 winH = 28
 method_threshold=2.5    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-save_info=False
+save_info=True
 crack=0
 
 # region crack info
@@ -183,6 +183,9 @@ WindowsCrack11=[ _DCS7221_343  ,_DCS7221_344 ,_DCS7221_377 ,_DCS7221_378 ,_DCS72
 WindowsCrack12=[ _DCS7221_606  ,_DCS7221_607 ,_DCS7221_608 ,_DCS7221_609 ,_DCS7221_610 ,_DCS7221_611 ]
 WindowsCrack13=[ _DCS7221_612  ,_DCS7221_613 ,_DCS7221_614 ,_DCS7221_615 ,_DCS7221_616 ,_DCS7221_617 ]
 
+# Crack dimensions in terms of rows and columns of subimages for each crack (first element is the number of the crack)
+crackgeometry = [[1,1,7],[2,5,2],[3,2,8],[4,9,3],[5,5,3],[6,5,3],[7,4,6],[8,5,2],[9,5,4],[10,6,3],[11,6,8],[12,6,2],[13,6,2]]
+
 # endregion
 
 crack=[Crack1,Crack2,Crack3,Crack4,Crack5,Crack6,Crack7,Crack8,Crack9,Crack10,Crack11,Crack12,Crack13] # list of cracks to check ()
@@ -193,26 +196,29 @@ resultlis=[]
 
 
 for h in range (0,len(crack)):
+    pathsubfolder = '\Crack ' + str(h + 1)  # Name of the folder where the predicted subimages detected as cracked are located
+    path2 = path + pathsubfolder  # Complete the path name with the folder name
+
+    # In case MAD is used, creates a folder for the specific MAD threshold used
+    if method_threshold != 0:
+        try:
+            os.chdir(path2)  # Access the path
+            # Create the Balanced folder if it doesn't exist
+            os.mkdir(os.path.join(path2, 'MAD k=' + str(method_threshold)))
+            print(f'Folder created successfully in {path2}')
+        except OSError as e:
+            print(f'Error creating folder in {path2}: {str(e)}')
+
+    pathMAD=path2+'\MAD k='+str(method_threshold)
+    pathBHist = path2 + '\Balanced'
+    if method_threshold==0:
+        path3=pathBHist
+    else:
+        path3 = pathMAD
+
     for i in range (0, len(crack[h])):
-        pathsubfolder='\Crack '+str(h+1)    # Name of the folder where the predicted subimages detected as cracked are located
-        path2 = path + pathsubfolder        # Complete the path name with the folder name
 
-        # In case MAD is used, creates a folder for the specific MAD threshold used
-        if method_threshold !=0:
-            try:
-                os.chdir(path2)  # Access the path
-                # Create the Balanced folder if it doesn't exist
-                os.mkdir(os.path.join(path2, 'MAD k='+str(method_threshold)))
-                print(f'Folder created successfully in {path2}')
-            except OSError as e:
-                print(f'Error creating folder in {path2}: {str(e)}')
 
-        pathMAD=path2+'\MAD k='+str(method_threshold)
-        pathBHist = path2 + '\Balanced'
-        if method_threshold==0:
-            path3=pathBHist
-        else:
-            path3 = pathMAD
 
         os.chdir(path2)                     # Access the path
 
@@ -243,7 +249,7 @@ for h in range (0,len(crack)):
             with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
                 output.write(str(completeList))
 
-        # Image with the crack obtained.
+        # Sub image with the crack obtained.
         # ===============================================
         width=selectedimage.shape[0]
         height=selectedimage.shape[1]
@@ -260,7 +266,7 @@ for h in range (0,len(crack)):
                 else:
                     finalsubimg[x, y] = selectedimage[x, y]
 
-        finalsubimgname = 'finalsubimgname' + crack[h][i]  # name of the edges image that will be saved
+        finalsubimgname = 'finalsubimg' + crack[h][i]  # name of the image that will be saved
         plt.figure('final sub Image', figsize=(10, 10))
 
         plt.imshow(finalsubimg)
@@ -269,7 +275,26 @@ for h in range (0,len(crack)):
         if save_info == True:
             dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
 
+    # Image with the crack obtained.
+    # ===============================================
+    nc=crackgeometry[h][1]  # Columns of subimages for the final image
+    nr=crackgeometry[h][2]  # Rows of subimages for the final image
+    subimglist= [os.path.join(path3, f) for f in os.listdir(path3) if "finalsubimg" in f ] # List of cracked processed subimages paths
+    path4= path2+'\\01_Uncracked_subimg\\'  # Path where the uncracked sub images are for the current crack
+    uncrksubimglist=glob.glob(path4 +'*.jpg')   # List of uncracked subimages paths
+    subimglist=subimglist + uncrksubimglist     # Addition of uncracked subimages paths
+    sortedlist = sorted(subimglist, key=lambda im: int((im.split('_')[-1]).split('.')[0])) # List sorted in ascending order
+    # merge sub images
+    image = dict.merge_images(sortedlist, nr, nc)
+    # merge sub images with their corresponding label
+    image_div = dict.merge_images_with_labels(sortedlist, nr, nc)
 
+    # Save the resulting processed crack and processed crack with subimage divisions and labels
+    if save_info == True:
+        newname = path3.split('\\')[7]+'MAD.jpg'        # Name for the resulting processed crack
+        newname2 = path3.split('\\')[7]+' divMAD.jpg'   # Name for the resulting processed crack with divisions
+        image.save(path3 +'\\'+ newname)                # Save image in the corresponding path
+        image_div.save(path3 +'\\'+ newname2)           # Save image in the corresponding path
 
 end_time = time.time()
 
