@@ -11,13 +11,15 @@ import os
 import cv2
 import math
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+import seaborn as sns
 from numpy import empty
+from scipy.stats import norm
 from skimage.util import invert
 import matplotlib.pyplot as plt
 from skimage.morphology import label
 from scipy.optimize import root_scalar
 from skimage.morphology import skeletonize
+from PIL import Image, ImageDraw, ImageFont
 from skimage.morphology import remove_small_objects
 
 
@@ -181,11 +183,11 @@ def CrackWidth(image, pixel_width):
     dx_dir_left = [5, 5, 5, 5, 4, 4, 3, 3, 2, 1, 0, -1, -2, -3, -3, -4, -4, -5, -5, -5]
     dy_dir_left = [0, -1, -2, -3, -3, -4, -4, -5, -5, -5, -5, -5, -5, -5, -4, -4, -3, -3, -2, -1]
 
-    plt.figure('skl+edges', figsize=(10, 10))
-    plt.subplot(121)
-    plt.imshow(skeleton_Img)
-    plt.subplot(122)
-    plt.imshow(edges_Img)
+    # plt.figure('skl+edges', figsize=(10, 10))
+    # plt.subplot(121)
+    # plt.imshow(skeleton_Img)
+    # plt.subplot(122)
+    # plt.imshow(edges_Img)
 
     for k in range(0, len(skeleton_coord)):
 
@@ -440,6 +442,58 @@ def detect_outliers_mad(data, threshold):
     inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
     return outliers, median, medianlist, inliers, lower_bound
 
+def final_subimage(image, imageColor,threshold,pixel_width):
+    """
+    Applies MAD with the introduced threshold for the input image.
+    :param image: grayscale image
+    :param threshold: threshold for MAD
+    :param pixel_width: pixel width in mm
+    :return:resultImg:binary image
+            finalsubimg: final sub image
+            low_bound: threshold given by MAD
+            medlist: median
+            Outl: Outliers list
+    """
+    # Transform to 1D array
+    WinData = image.ravel()
+
+    # Apply MAD procedure to detect outliers
+    Outl, med, medlist, inliers, low_bound = detect_outliers_mad(WinData, threshold)
+
+    # Creates the result image
+    resultImg = image.copy() * 0
+
+    # Creates thresh, binary image obtained using the lowbound threshold obtained previously with MAD
+    ret, thresh = cv2.threshold(image, low_bound, 255, cv2.THRESH_BINARY)
+    thresh = invert(thresh)
+
+    # Takes the image with only the crack and removes small objects according to the specified size
+    resultImage = cleanimage(thresh,3)
+
+    # Get the widths, coordinate of the skeleton, img with skeleton,img with edges, info list
+    widths, coordsk, skframes, edgesframes, completeList = CrackWidth(resultImage // 255, pixel_width)
+
+    # Sets the image width and heigh
+    width = image.shape[0]
+    height = image.shape[1]
+
+    # Creates the finalsubimage element that will have the crack highlighted and the rest of the pixel in grayscale
+    finalsubimg = empty([width, height, 3], dtype=np.uint8)
+    for x in range(0, width):
+        for y in range(0, height):
+            if skframes[x, y] > 0:
+                finalsubimg[x, y] = [255, 0, 0]  # If pixel is part of skeleton paint red
+            elif resultImage[x, y] > 0:
+                finalsubimg[x, y] = [255, 255, 0]  # If pixel is part of crack paint yellow
+            elif edgesframes[x, y] > 0:
+                finalsubimg[x, y] = [0, 0, 255]  # If pixel is part of edge, paint blue
+            else:
+                finalsubimg[x, y] = imageColor[x, y]
+
+    return resultImg, finalsubimg, low_bound, medlist, Outl
+
+
+
 def imgSaving(path, name, element):
     """
         Saves an obtained image into a specified directory
@@ -448,14 +502,15 @@ def imgSaving(path, name, element):
     ----------
     :param path: path where the image has to be saved
     :param name: name of the resulting file
-    :param element: element to be saved
+    :param element: Numpy element to be saved as an Image
 
     Returns
     -------
 
     """
-    name = name + '.jpg'
-    cv2.imwrite(os.path.join(path, name), element)  # saves the obtained image showing as a .jpg in the folder
+    name = os.path.join(path, name+'.png')
+    image_element=Image.fromarray(element)  # Transforms the NumPy array into an image element
+    image_element.save(name)  # saves the obtained image showing as a .png in the folder
 
 def instersection_gaussians(gmm, i, j):
     """
@@ -529,6 +584,7 @@ def joinwindows(img, windows, i, winH, winW,threshold):
 
         ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
         thresh=invert(thresh)
+        # Puts the different binary windows(28x28, usually) obtained after threshold into a binary subimage (224x224)
         xx = 0
         yy = 0
         for k in range(x, x + window.shape[1]):
@@ -669,6 +725,140 @@ def sliding_window(image, stepSize, windowSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
+# # ================================================================================================================
+# 2. Specific plots
+# # ================================================================================================================
+def plot_hist_kde_outl(image,clone,Outl,medlist):
+
+    # Transform to 1D array
+    WinData = image.ravel()
+    # Plot the image with the window, the pixels in the window, histogram of the window
+    fig=plt.figure('Subimg Hist Normfit Outliers ', figsize=(19, 10))
+    plt.subplot(2, 3, 1)
+    plt.imshow(image, cmap='gray')
+    plt.title('Sub-image')
+
+    plt.subplot(2, 3, 2)
+    plt.imshow(clone, cmap='gray')
+    plt.title('Sub-image region')
+
+    # plt.subplot(2, 3, 2)
+    # plt.hist(WinData, 256, [0, 256] )
+    # plt.xlabel('Value')
+    # plt.ylabel('Frequency')
+    # plt.title('Intensity histogram' )
 
 
+    plt.subplot(2, 3, 3)
+    sns.distplot(WinData, fit=norm, kde=True, label="Density", norm_hist=False)
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.legend(loc='upper left')
+    plt.title('Normal fitting')
 
+    plt.subplot(2, 3, 4)
+    bins=WinData.max()-WinData.min()
+    plt.hist(WinData, bins=bins,  density=True)
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.title('Intensity histogram (zoom)')
+
+    plt.subplot(2, 3, 5)
+    plt.hist(Outl, bins=50, label= 'Outliers')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.title('Outliers')
+
+    plt.subplot(2, 3, 6)
+    plt.hist(WinData, bins=bins,color='blue' , label= 'DataSet')
+    plt.hist(Outl, bins=bins, color='red', label='Outliers')
+    plt.hist(medlist, bins=2, color='green', label='Median')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.legend(loc='upper left')
+    plt.title('Histogram with Outliers')
+
+
+    return fig
+
+def plot_hist_eq(image):
+    WinData = image.ravel()
+    # Histogram and CDF for the initial image
+    hist, bins = np.histogram(image.flatten(), 256, [0, 256])
+    cdf = hist.cumsum()
+    cdf_normalized = cdf * hist.max() / cdf.max()
+
+    #Mask for equalization of image
+    cdf_m = np.ma.masked_equal(cdf, 0)
+    cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
+    cdf = np.ma.filled(cdf_m, 0).astype('uint8')
+    # Equalizaed image
+    img2 = cdf[image]
+    hist2, bins = np.histogram(img2.flatten(), 256, [0, 256])
+    cdf2 = hist2.cumsum()
+    cdf_normalized2 = cdf2 * hist2.max() / cdf2.max()
+
+
+    #Plot the image
+    plt.figure('img', figsize=(10, 10))
+    plt.subplot(131)
+    plt.imshow(image, cmap='gray')
+    plt.title('Image')
+
+    #subplot histogram
+    plt.subplot(132)
+    # plt.plot(cdf_normalized, color='b')
+    plt.hist(image.flatten(), 256, [0, 256], color='r')
+    plt.xlim([0, 256])
+    plt.legend(( 'histogram'), loc='upper left')
+
+    # plt.subplot(2, 2, 3)
+    # plt.imshow(img2, cmap='gray')
+    # plt.title('Image2')
+
+    #subplot equalized histogram
+    plt.subplot(133)
+    # plt.plot(cdf_normalized2, color='b')
+    plt.hist(img2.flatten(), 256, [0, 256], color='r')
+    plt.xlim([0, 256])
+    plt.legend(('cdf2', 'histogram2'), loc='upper left')
+    plt.show()
+
+def hist_equalization(image):
+    WinData = image.ravel()
+    # Histogram and CDF for the initial image
+    hist, bins = np.histogram(image.flatten(), 256, [0, 256])
+    cdf = hist.cumsum()
+    cdf_normalized = cdf * hist.max() / cdf.max()
+
+    # Mask for equalization of image
+    cdf_m = np.ma.masked_equal(cdf, 0)
+    cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
+    cdf = np.ma.filled(cdf_m, 0).astype('uint8')
+    # Equalizaed image
+    img2 = cdf[image]
+    hist2, bins = np.histogram(img2.flatten(), 256, [0, 256])
+    cdf2 = hist2.cumsum()
+    cdf_normalized2 = cdf2 * hist2.max() / cdf2.max()
+
+    # if print1 == True:
+    # Plot the image
+    plt.figure('img' , figsize=(10, 10))
+    plt.subplot(131)
+    plt.imshow(image, cmap='gray')
+    plt.title('Image')
+
+    # subplot histogram
+    plt.subplot(132)
+    # plt.plot(cdf_normalized, color='b')
+    plt.hist(image.flatten(), 256, [0, 256], color='r')
+    plt.xlim([0, 256])
+    plt.legend(('histogram'), loc='upper left')
+
+    # subplot equalized histogram
+    plt.subplot(133)
+    # plt.plot(cdf_normalized2, color='b')
+    plt.hist(img2.flatten(), 256, [0, 256], color='r')
+    plt.xlim([0, 256])
+    plt.legend(('cdf2', 'histogram2'), loc='upper left')
+    plt.show()
