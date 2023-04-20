@@ -18,6 +18,7 @@ from skimage.util import invert
 from numpy import empty
 import time
 import glob
+from PIL import Image
 
 start_time = time.time()
 
@@ -29,6 +30,7 @@ winW = 28
 winH = 28
 method_threshold=2.5    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
 save_info=True
+save_img=True
 crack=0
 
 # region crack info
@@ -243,9 +245,9 @@ for h in range (0,len(crack)):
         # If the image without small object, skeletons, edges and lists want to be saved
         if save_info==True:
             os.chdir(path3)
-            dict.imgSaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
-            dict.imgSaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
-            dict.imgSaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
+            dict.BinarySaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
+            dict.BinarySaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
+            dict.BinarySaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
             with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
                 output.write(str(completeList))
 
@@ -272,7 +274,7 @@ for h in range (0,len(crack)):
         plt.imshow(finalsubimg)
         plt.show()
         # If the final subimage want to be saved
-        if save_info == True:
+        if save_img == True:
             dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
 
     # Image with the crack obtained.
@@ -281,7 +283,7 @@ for h in range (0,len(crack)):
     nr=crackgeometry[h][2]  # Rows of subimages for the final image
     subimglist= [os.path.join(path3, f) for f in os.listdir(path3) if "finalsubimg" in f ] # List of cracked processed subimages paths
     path4= path2+'\\01_Uncracked_subimg\\'  # Path where the uncracked sub images are for the current crack
-    uncrksubimglist=glob.glob(path4 +'*.jpg')   # List of uncracked subimages paths
+    uncrksubimglist=glob.glob(path4 +'*.png')   # List of uncracked subimages paths
     subimglist=subimglist + uncrksubimglist     # Addition of uncracked subimages paths
     sortedlist = sorted(subimglist, key=lambda im: int((im.split('_')[-1]).split('.')[0])) # List sorted in ascending order
     # merge sub images
@@ -290,9 +292,9 @@ for h in range (0,len(crack)):
     image_div = dict.merge_images_with_labels(sortedlist, nr, nc)
 
     # Save the resulting processed crack and processed crack with subimage divisions and labels
-    if save_info == True:
-        newname = path3.split('\\')[7]+'MAD.jpg'        # Name for the resulting processed crack
-        newname2 = path3.split('\\')[7]+' divMAD.jpg'   # Name for the resulting processed crack with divisions
+    if save_img == True:
+        newname = path3.split('\\')[7]+'MAD.png'        # Name for the resulting processed crack
+        newname2 = path3.split('\\')[7]+' divMAD.png'   # Name for the resulting processed crack with divisions
         image.save(path3 +'\\'+ newname)                # Save image in the corresponding path
         image_div.save(path3 +'\\'+ newname2)           # Save image in the corresponding path
 
