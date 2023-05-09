@@ -1,5 +1,5 @@
 """
-Created on Sat april 01 2023
+Created on Sat april 01, 2023,
 @author: jca
 
 Process on a single crack to obtain skeleton, crack pixels, edges, final subimages, final image
@@ -26,9 +26,9 @@ path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 # pixel_width in mm
 pixel_width = 0.08
 # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-method_threshold = 3.5
+method_threshold = 2.5
 # If the info related to x,y coordinates and widths want to be saved as text file
-save_info = False
+save_info = True
 # If image without small object, skeletons, edges want to be saved as png
 save_img_parts = False
 # If the generated images want to be saved
@@ -232,7 +232,9 @@ WindowsCrack11 = [_DCS7221_343, _DCS7221_344, _DCS7221_377, _DCS7221_378, _DCS72
 WindowsCrack12 = [_DCS7221_606, _DCS7221_607, _DCS7221_608, _DCS7221_609, _DCS7221_610, _DCS7221_611]
 WindowsCrack13 = [_DCS7221_612, _DCS7221_613, _DCS7221_614, _DCS7221_615, _DCS7221_616, _DCS7221_617]
 
-# Crack dimensions in terms of rows and columns of subimages for each crack (first element is the number of the crack)
+# Crack dimensions in terms of rows and columns of subimages for each crack (first element is the number of the crack,
+# second number is the number of columns and third is rows)
+
 crackgeometry = [[1, 1, 7], [2, 5, 2], [3, 2, 8], [4, 9, 3], [5, 5, 3], [6, 5, 3], [7, 4, 6], [8, 5, 2], [9, 5, 4],
                  [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2]]
 
@@ -254,7 +256,7 @@ crack = [Crack13]
 # list of windows for each subimage
 windows = [WindowsCrack13]
 # Size of the window to use on every subimage
-winAarray = [28, 32, 37, 56]
+winAarray = [28]    #, 32, 37, 56
 
 # # ====================================================================================================================
 # Process
@@ -264,8 +266,8 @@ for h in range(0, len(crack)):
     # # ================================================================================================================
     # 1. Paths arrangement
     # # ================================================================================================================
-    pathsubfolder = '\Crack ' + str(
-        h + n)  # Name of the folder where the predicted subimages detected as cracked are located
+    # Name of the folder where the information of the desired crack is located
+    pathsubfolder = '\Crack ' + str(h + n)
     path2 = path + pathsubfolder  # Complete the path name with the folder name
 
     # In case MAD is used, creates a folder for the specific MAD threshold used
@@ -332,7 +334,6 @@ for h in range(0, len(crack)):
             # completeList: List of results, creates a vector with x,y coord of the skeleton and the corresponding width
             #   for that skeleton pixel and in mm according to the measure of pixel width
             widths, coordsk, skframes, edgesframes, completeList = dict.CrackWidth(resultImage // 255, pixel_width)
-
             # 2.1.5 Save information
             # If selected, saves the result image, skeleton, edges (binary images) and list with results
             # ========================================================================================================
@@ -358,7 +359,7 @@ for h in range(0, len(crack)):
             # ===============================================
             if save_info == True:
                 # Columns names
-                column_names = ['X coord', 'Y coord', 'Width (pxl)', 'Width (mm)']
+                column_names = ['Y coord', 'X coord', 'Width (pxl)', 'Width (mm)','Danger group']
                 header = '\t'.join(column_names)
                 # Writes header with the names of the columns and fills every row with the values in a certain format
                 with open(path3 + '//' + completeListname, "w") as output:
@@ -398,7 +399,7 @@ for h in range(0, len(crack)):
             if save_img:
                 os.chdir(path)
                 # The image is saved in the path
-                dict.imgSaving(path, finalsubimgname, finalsubimg)
+                dict.imgSaving(path3, finalsubimgname, finalsubimg)
                 # finalsubimgRGB = Image.fromarray(finalsubimg)
                 # # finalsubimgRGB=finalsubimgRGB.convert('sRGB')
                 # finalsubimgRGB.save('output.png')
