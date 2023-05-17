@@ -40,7 +40,7 @@ def RefPoints(n,k,horizontal,saveimg,saveref_points_list):
     path1 = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack ' + str(n) + '\\'
     # Name of the folder where the final img is located
 
-    pathsubfolder = 'MAD k='+ str(method_threshold)+'\\ '
+    pathsubfolder = 'MAD k='+ str(method_threshold)+'\\'
     path2 = path1+pathsubfolder
 
     # Access the path
@@ -149,4 +149,4 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Elapsed time: {elapsed_time:.2f} seconds")
 
-
+RefPoints(11,2,False,False,False)
