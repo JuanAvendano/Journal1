@@ -2,7 +2,7 @@
 # Este codigo esta hecho para pasar por las fotos de las grietas y determinar cuales recuadros de 28x28 contienen grietas.
 # Al encontrar resultados positivos hay que poner en el Console: lista_cuadros.append([x,y]) para agregar las coordenadas
 # como elementos de una lista. Los elementos de la lista son el resultado y se estan copiando y pegando en un archivo de
-# excel para tener la lista completa. El archivo se llama "lista recuadros" en C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification
+# excel para tener la lista completa. El archivo se llama "lista recuadros" en C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list
 # """
 
 
@@ -40,12 +40,19 @@ def sliding_window(image, stepSize, windowSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
-path = r'C:\Users\juanc\OneDrive - KTH\Journals\Data\to review\Cracked'
-os.chdir(path)  # Access the path
-name='_DCS7230_582.jpg'
+path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
+
+# Number of the cracked that is going to be processed
+n = 7
+# Name of the folder where the information of the desired crack is located
+pathsubfolder = '\Crack ' + str(n)+'\\00_Cracked_subimg\\'
+path2 = path + pathsubfolder  # Complete the path name with the folder name
+# Access the path
+os.chdir(path2)
+name='_DCS7230_344.png'
 image = cv2.imread(name)
-pixel_width=0.1
 img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+pixel_width=0.1
 winW = 28
 winH = 28
 lista_cuadros=[]
