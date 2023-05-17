@@ -25,7 +25,7 @@ start_time = time.time()
 # Inputs
 # # ====================================================================================================================
 # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-k =3
+k =2
 # pixel_width in mm
 pixelwidth = 0.08
 # Analisis performed using the windows in each sub image or using the full sub image as a whole
@@ -33,41 +33,45 @@ subimgwindows=True
 fullsubimg=False
 
 # If the info related to x,y coordinates and widths want to be saved as text file
-save_info_Results = False
+save_info_Results = True
 # If image without small object, skeletons, edges want to be saved as png
-saveimgparts = False
+saveimgparts = True
 # If the generated final subimages want to be saved
-savesubimg = False
+savesubimg = True
 # If the generated images want to be saved
-saveimg = False
+saveimg = True
 
 #For full sub img:
-save_finalsubimg=False
-save_final_full_subimage=False
+save_finalsubimg=True
+save_final_full_subimage=True
 
 # If the merged list of x,y coordinates and widths want to be saved as text file
-save_info_MergeText = False
+save_info_MergeText = True
 
 # Orientation of the crack
-horizontal = False
+horizontal = True
 # If the generated final marked image want to be saved
-save_img_RefPoints = False
+save_img_RefPoints = True
 # If the generated reference point list want to be saved
-saveRef_Points_list = False
+saveRef_Points_list = True
 
 # If the info related to x,y coordinates and widths want to be saved as text file for the skeleton points close to the
 #reference points
-save_info_Dist_RP_Skl = False
+save_info_Dist_RP_Skl = True
 
 # If the file including the reference measurements, method measurements and errors wants to be saved
-save_info_Stats = False
+save_info_Stats = True
+
+# Range of cracks that are gonna be studied
+start=11
+end=12
 
 # # ====================================================================================================================
 # 1. Results per crack
 # # ====================================================================================================================
 
 # Batch process on sub image windows
-for x in range(1,14):
+for x in range(start,end):
     unit_result(x, k, pixelwidth, save_info_Results, saveimgparts, savesubimg, saveimg)
 
 
@@ -75,14 +79,14 @@ for x in range(1,14):
 # 2. Merge Text files
 # # ====================================================================================================================
 # Batch process
-for i in range(1,14):
+for i in range(start,end):
     mergetxtfiles(i, k, save_info_MergeText)
 
 # # ====================================================================================================================
 # 3. Create Reference Points in the obtained Crack#MAD image (final img) as green pixels
 # # ====================================================================================================================
 # Batch process
-for i in range(1,14):
+for i in range(start,end):
     horizontal = True
     if i in [1, 3, 7, 11]:
         horizontal = False
@@ -93,7 +97,7 @@ for i in range(1,14):
 # 4. Calculates the distances from the RefPoints to the closest Skeleton point and generates a list with those points
 # # ====================================================================================================================
 # Batch process
-for i in range(1,14):
+for i in range(start,end):
     dist_ref_points_skeleton(i, k, save_info_Dist_RP_Skl)
 
 # # ====================================================================================================================
