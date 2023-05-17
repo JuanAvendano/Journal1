@@ -301,15 +301,15 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
 
     crackgeometry = [[1, 1, 7], [2, 5, 2], [3, 2, 8], [4, 9, 3], [5, 5, 3], [6, 5, 3], [7, 4, 6], [8, 5, 2], [9, 5, 4],
                      [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2],[14,6,10]]
-
-    # endregion
-
     # list of cracks to check
     crack = [Crack1, Crack2, Crack3, Crack4, Crack5, Crack6, Crack7, Crack8, Crack9, Crack10, Crack11, Crack12, Crack13, Crack14]
     # list of windows for each subimage
     windows = [WindowsCrack1, WindowsCrack2, WindowsCrack3, WindowsCrack4, WindowsCrack5, WindowsCrack6, WindowsCrack7,
                WindowsCrack8, WindowsCrack9, WindowsCrack10, WindowsCrack11, WindowsCrack12,
                WindowsCrack13,WindowsCrack14]
+    # endregion
+
+
     # List for the subimages results
     resultlis = []
 
