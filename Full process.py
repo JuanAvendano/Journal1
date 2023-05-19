@@ -28,6 +28,10 @@ start_time = time.time()
 k =2
 # pixel_width in mm
 pixelwidth = 0.08
+# Range of cracks that are gonna be studied
+start=5
+end=6 #(Must be 1 more than the desired number)
+
 # Analisis performed using the windows in each sub image or using the full sub image as a whole
 subimgwindows=True
 fullsubimg=False
@@ -62,9 +66,6 @@ save_info_Dist_RP_Skl = True
 # If the file including the reference measurements, method measurements and errors wants to be saved
 save_info_Stats = True
 
-# Range of cracks that are gonna be studied
-start=11
-end=12
 
 # # ====================================================================================================================
 # 1. Results per crack
