@@ -436,7 +436,7 @@ def detect_outliers_mad(data, threshold):
     median = np.median(data)
     mad = np.median(np.abs(data - median))
     lower_bound = median - threshold * mad
-    if lower_bound<1:
+    while lower_bound<1:
         lower_bound=(median-lower_bound)/2
     upper_bound = median + threshold * mad
     outliers = [x for x in data if x < lower_bound or x > upper_bound]
