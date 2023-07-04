@@ -1,3 +1,9 @@
+"""
+Created on  may 19 2023
+@author: jca
+Creates subimg with the divisions of the windows marked
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
