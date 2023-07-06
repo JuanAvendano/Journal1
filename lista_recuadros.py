@@ -17,10 +17,10 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import matplotlib.pyplot as plt
 
-path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
+path = r'C:\Users\jcac\OneDrive - KTH\Journals\01-Quantification\Image_list'
 
 # Number of the cracked that is going to be processed
-n =11
+n =25
 # Name of the folder where the information of the desired crack is located
 pathsubfolder = '\Crack ' + str(n)+'\\00_Cracked_subimg\\'
 path2 = path + pathsubfolder  # Complete the path name with the folder name
@@ -32,9 +32,12 @@ winH = 28
 lista_cuadros=[]
 lista_completa=[]
 
-name= ['_DCS7221_577']
+# List of cracked  subimages paths
+name = os.listdir(path2)
+# name= ['_DCS7260_186']
 for k in range(len(name)):
-    image = Image.open(name[k]+'.png')
+    # image = Image.open(name[k]+'.png')
+    image = Image.open(name[k])
     img = image.convert('L')
     list=[[x, y] for x in range(0, 224, 28) for y in range(0, 224, 28)]
     clone = img.copy()
@@ -59,9 +62,13 @@ for k in range(len(name)):
 
     #Plot the image with the window, the pixels in the window, histogram of the window
     plt.figure('window ', figsize=(10,10))
-    plt.imshow(clone)
+    plt.imshow(clone, cmap='gray')
+    plt.title(name[k])
+    plt.show()
+    # Prompting user for input
+    user_input = input("Please enter some information: ")
+    nn=[int(num) for num in user_input.split(',')]
 
-    nn=[]
     lista_cuadros=[list[numero] for numero in nn ]
     lista_completa.append([name[k], lista_cuadros,'x'])
     print(name[k],';',lista_cuadros)
