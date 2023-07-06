@@ -24,7 +24,7 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
     # Inputs
     # # ================================================================================================================
     # Path for the different possible cracks
-    path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
+    path = r'C:\Users\jcac\OneDrive - KTH\Journals\01-Quantification\Image_list'
     # Number of the cracked that is going to be processed
     n = n
     # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
@@ -265,7 +265,8 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
     # second number is the number of columns and third is rows)
 
     crackgeometry = [[1, 1, 7], [2, 5, 2], [3, 2, 8], [4, 9, 3], [5, 5, 3], [6, 5, 3], [7, 4, 6], [8, 5, 2], [9, 5, 4],
-                     [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2], [14, 6, 10]]
+                     [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2], [14,8,10],[15,7,8],[16,4,18],[17,3,9],[18,4,13],[19,3,10],[20,3,7],[21,5,11],[22,6,9],[23,4,13],[24,5,17],[25,6,16],[26,4,10],[27,6,4],[28,17,3],[29,15,4]
+]
     # list of cracks to check
     crack = [Crack1, Crack2, Crack3, Crack4, Crack5, Crack6, Crack7, Crack8, Crack9, Crack10, Crack11, Crack12, Crack13
              ]
