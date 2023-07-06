@@ -41,12 +41,13 @@ def MADfull_subimg(n, k, pix_width, save_finalsubimg,save_final_full_subimage):
     save_final_full_subimage=save_final_full_subimage
 
     crackgeometry = [[1, 1, 7], [2, 5, 2], [3, 2, 8], [4, 9, 3], [5, 5, 3], [6, 5, 3], [7, 4, 6], [8, 5, 2], [9, 5, 4],
-                     [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2],[14,6,10]]
+                     [10, 6, 3], [11, 6, 8], [12, 6, 2], [13, 6, 2],[14,8,10],[15,7,8],[16,4,18],[17,3,9],[18,4,13],[19,3,10],[20,3,7],[21,5,11],[22,6,9],[23,4,13],[24,5,17],[25,6,16],[26,4,10],[27,6,4],[28,17,3],[29,15,4]
+]
     # # ===============================================================================================================.
     # 1. Paths arrangement
     # # ===============================================================================================================.
     # path for crack
-    path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack ' +str(n)+'\\'
+    path =r'C:\Users\jcac\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack ' +str(n)+'\\'
     # Name of the folder where the cracked subimg are located
     pathsubfolder = '00_Cracked_subimg'
     path2 = path+pathsubfolder
@@ -102,7 +103,7 @@ def MADfull_subimg(n, k, pix_width, save_finalsubimg,save_final_full_subimage):
     # List of cracked processed subimages (finalsubimg) paths
     subimglist = [os.path.join(path3, f) for f in os.listdir(path3) if "full_subimg" in f and ".png" in f]
     # Path where the uncracked sub images are for the current crack
-    path4 = path + '\\01_Uncracked_subimg\\'
+    path4 = path + '01_Uncracked_subimg\\'
     # List of uncracked subimages paths
     uncrksubimglist = glob.glob(path4 + '*.png')
     # Addition of uncracked subimages path lists
