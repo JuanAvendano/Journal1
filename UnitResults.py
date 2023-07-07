@@ -24,7 +24,7 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
     # Inputs
     # # ================================================================================================================
     # Path for the different possible cracks
-    path = r'C:\Users\jcac\OneDrive - KTH\Journals\01-Quantification\Image_list'
+    path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
     # Number of the cracked that is going to be processed
     n = n
     # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
@@ -767,6 +767,8 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
             except OSError as e:
                 print(f'Error creating folder in {path2}: {str(e)}')
 
+        # Path where the cracked sub images are located
+        pathCrackedsubimg = path2 + '\\00_Cracked_subimg'
         # Path where results will be saved if using MAD
         pathMAD = path2 + '\MAD k=' + str(method_threshold)
         # Path where results will be saved if using Balanced Thresholding
@@ -782,7 +784,7 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
         # # ============================================================================================================
         for i in range(0, len(crack[h])):
             # Access the path
-            os.chdir(path2)
+            os.chdir(pathCrackedsubimg)
 
             # # =======================================================================================================.
             # 2.1 Process over each subimage for the different windows sizes.
@@ -878,9 +880,9 @@ def unit_result(n, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg):
                 # Name of the image that will be saved
                 finalsubimgname = 'finalsubimg' + crack[h][i]
                 # Plot the final sub image
-                plt.figure('final sub Image', figsize=(10, 10))
-                plt.imshow(finalsubimg)
-                plt.show()
+                # plt.figure('final sub Image', figsize=(10, 10))
+                # plt.imshow(finalsubimg)
+                # plt.show()
 
                 # If the final subimage want to be saved
                 if save_subimg:
