@@ -17,7 +17,7 @@ import numpy as np
 
 start_time = time.time()
 
-def Statistics(k,save_info):
+def Statistics(k,save_info,start,end):
     # # ================================================================================================================
     # Inputs
     # # ================================================================================================================
@@ -56,7 +56,7 @@ def Statistics(k,save_info):
     ind=0
 
     # Iterate through each value of n corresponding to the number of cracks
-    for n in range(1, 14):
+    for n in range(start, end+1):
         # 2.2.1. Paths arrangement
         # # =============================================================================================================...
         # Name of the folder of the crack

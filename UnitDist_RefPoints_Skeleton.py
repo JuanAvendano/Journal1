@@ -108,9 +108,6 @@ def dist_ref_points_skeleton(n,k,save_info):
             for result in results:
                 output.write(result + "\n")
 
-# Batch process
-for i in range(1,14):
-    dist_ref_points_skeleton(i,2.5,True)
 
 # Finish time counter
 end_time = time.time()

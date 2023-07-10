@@ -1,7 +1,8 @@
 """
 Created on Fri march 24 2023
 @author: jca
-code to merge the result images from MAD into one image and one image with divisions for clarity and in case
+code to merge the unprocessed cracked subimages and the uncracked subimages into one image and one image with divisions
+for clarity and in case
 checking is needed"""
 
 
