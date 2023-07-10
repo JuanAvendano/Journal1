@@ -15,18 +15,21 @@ start_time = time.time()
 # # ====================================================================================================================
 # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
 k = 3
+# Cracks to be studied
+start=14
+end=29
 # pixel_width in mm
 pixelwidth = 0.08
 # If the info related to x,y coordinates and widths want to be saved as text file
-save_info = False
+save_info = True
 # If image without small object, skeletons, edges want to be saved as png
-saveimgparts = False
+saveimgparts = True
 # If the generated final subimages want to be saved
-savesubimg = False
+savesubimg = True
 # If the generated images want to be saved
 saveimg = True
 
-for x in range(1, 14):
+for x in range(start, end+1):
     unit_result(x, k, pixelwidth, save_info, saveimgparts, savesubimg, saveimg)
 
 

@@ -16,12 +16,14 @@ start_time = time.time()
 # # ====================================================================================================================
 # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
 k = 3
-
+# Cracks to be studied
+start=14
+end=29
 # If the merged list of x,y coordinates and widths want to be saved as text file
 save_info = True
 
 # Batch process
-for i in range(1,14):
+for i in range(start, end+1):
     mergetxtfiles(i, k, save_info)
 
 # Finish time counter

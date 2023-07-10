@@ -18,11 +18,15 @@ start_time = time.time()
 # # ================================================================================================================
 # Method, used to know where the final subimg is located and where files need to be saved
 k=3
+# Cracks to be studied
+start=14
+end=29
+
 # If the info related to x,y coordinates and widths want to be saved as text file for the skeleton points close to the
 #reference points
 save_info = True
 # Batch process
-for i in range(1,14):
+for i in range(start, end+1):
     dist_ref_points_skeleton(i, k, save_info)
 
 # Finish time counter

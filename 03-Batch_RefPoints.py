@@ -19,6 +19,10 @@ start_time = time.time()
 # # ====================================================================================================================
 # Method, used to know where the final subimg is located and where files need to be saved
 k = 3
+# Cracks to be studied
+start=14
+end=29
+
 # Orientation of the crack
 horizontal = True
 # If the generated final marked image want to be saved
@@ -27,9 +31,9 @@ save_img = True
 saveref_points_list = True
 
 # Batch process
-for i in range(1, 14):
+for i in range(start, end+1):
     horizontal = True
-    if i in [1, 3, 7, 11]:
+    if i in [1, 3, 7, 11,14,15,16,17,18,19,20,21,22,23,24,25,26]:
         horizontal = False
     RefPoints(i, k, horizontal, save_img, saveref_points_list)
 
