@@ -1,10 +1,9 @@
 """
 Created on Tue may 09 2023
 @author: jca
-Codigo para tomar todos los resultados de las diferentes grietas obtenidos con el codigo "Dist_RefPoints_Skeleton".
-Se toman los diferentes txt files generados para una cierto valor de k, se ponen en una lista y se comparan con los valores
-medidos a mano que se encuentran en un archivo de excel y en una txt file. Se computan los diferentes errores.
 
+Takes the results of the previous step and compares them with the results of the RefMeasures file to compute the error
+and create the final results report that is saved in the results folder
 
 
 """

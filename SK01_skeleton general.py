@@ -2,6 +2,9 @@
 Created on Mon Jul 10 2023
 @author: jca
 
+Takes the result image from using MAD on cracked subimages and windows and generates a new skeleton based on the yellow
+and blue pixels. A new image starting with 000 is created as well as txt file with the results also, starting with 000
+
 """
 
 

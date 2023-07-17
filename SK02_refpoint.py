@@ -2,6 +2,8 @@
 Created on Mon Jul 10 2023
 @author: jca
 
+Takes the image created in the previous step and adds the ref points
+
 """
 
 

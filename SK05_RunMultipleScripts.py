@@ -1,3 +1,12 @@
+"""
+Created on Tue may 09 2023
+@author: jca
+
+Script to run multiple scripts together
+
+
+"""
+
 import subprocess
 import time
 
