@@ -40,11 +40,11 @@ def skeleton_genral(n, k, pixelwidth,  saveimg,saveinfo):
     pathsubfolder = '\Crack ' + str(n)
     path2 = path + pathsubfolder  # Complete the path name with the folder name
     # Path where results will be saved if using MAD
-    pathMAD = path2 + '\MAD k=' + str(method_threshold)
+    pathMAD = path2 + '\MAD k=' + str(method_threshold)+' full_subimg'
     os.chdir(pathMAD)
     # Get the subimage (selected image) and turns it into greyscale (imageBW)
     # ========================================================================================================
-    selectedimage, imageBW = dict.selectimg('Crack '+str(n)+'MAD')
+    selectedimage, imageBW = dict.selectimg('Crack '+str(n)+'MADfullsubimg')
 
     # Create a mask for red pixels
     yellow_mask = cv2.inRange(selectedimage, (0, 255, 255), (0, 255, 255))
@@ -82,14 +82,14 @@ def skeleton_genral(n, k, pixelwidth,  saveimg,saveinfo):
     # Saves the final subimage as a png if save_img selected
     # ======================================================
     # Name of the image that will be saved
-    finalsubimgname = '000_Crack '+str(n)+'_MAD k=' + str(method_threshold)
+    finalsubimgname = '000_Crack '+str(n)+'_MAD k=' + str(method_threshold)+' full_subimg'
     if save_img:
         os.chdir(pathMAD)
         # The image is saved in the path
         dict.imgSaving(pathMAD, finalsubimgname, finalsubimg)
     # saves the list as a txt file
     # ===============================================
-    completeListname = '000_completeList_Crack' + str(n) + '.txt'  # name of the image that will be saved
+    completeListname = '000_completeList_Crack' + str(n)+' full_subimg' + '.txt'  # name of the image that will be saved
     if save_info == True:
         # Columns names
         column_names = ['Y coord', 'X coord', 'Width (pxl)', 'Width (mm)', 'Danger group']
@@ -107,17 +107,19 @@ def skeleton_genral(n, k, pixelwidth,  saveimg,saveinfo):
 # # ====================================================================================================================
 # Inputs
 # # ====================================================================================================================
-# Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-k = 2.5
-# Cracks to be studied
-start = 23
-end = 23
-save_img = True
-# If the merged list of x,y coordinates and widths want to be saved as text file
-save_info=True
-# Batch process
-for i in range(start, end + 1):
-    skeleton_genral(i, k, 0.08,save_img,save_info)
+listk=[2.2,3,3.5]
+for x in listk:
+    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+    k = x
+    # Cracks to be studied
+    start = 1
+    end = 29
+    save_img = True
+    # If the merged list of x,y coordinates and widths want to be saved as text file
+    save_info=True
+    # Batch process
+    for i in range(start, end + 1):
+        skeleton_genral(i, k, 0.08,save_img,save_info)
 
 # Finish time counter
 end_time = time.time()

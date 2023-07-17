@@ -36,7 +36,7 @@ def RefPointsGeneralSkltn(n,k,horizontal,saveimg,saveref_points_list):
     path1 = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list\Crack ' + str(n) + '\\'
     # Name of the folder where the final img is located
 
-    pathsubfolder = 'MAD k='+ str(method_threshold)+'\\'
+    pathsubfolder = 'MAD k='+ str(method_threshold)+' full_subimg''\\'
     path2 = path1+pathsubfolder
 
     # Access the path
@@ -119,7 +119,7 @@ def RefPointsGeneralSkltn(n,k,horizontal,saveimg,saveref_points_list):
     # 3.1 Mark the final image
     # # ==============================================================================================================..
     #Load final subimg
-    final_img = cv2.imread(path2+'000_Crack '+str(n)+'_MAD k=' + str(method_threshold) +'.png')
+    final_img = cv2.imread(path2+'000_Crack '+str(n)+'_MAD k=' + str(method_threshold)+' full_subimg' +'.png')
     # Transformation from BGR color code to RGB
     final_img = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
 
@@ -138,30 +138,32 @@ def RefPointsGeneralSkltn(n,k,horizontal,saveimg,saveref_points_list):
     if save_img:
         os.chdir(path2)
         # The image is saved in the path
-        dict.imgSaving(path2, 'finalimg_marked_general_skl', final_img)
+        dict.imgSaving(path2, 'finalimg_marked_general_skl_full_subimg', final_img)
 
 
 # # ====================================================================================================================
 # Inputs
 # # ====================================================================================================================
-# Method, used to know where the final subimg is located and where files need to be saved
-k = 2
-# Cracks to be studied
-start=1
-end=29
+listk=[2.2,3,3.5]
+for x in listk:
+    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+    k = x
+    # Cracks to be studied
+    start=1
+    end=29
 
 
-# If the generated final marked image want to be saved
-save_img = True
-# If the generated reference point list want to be saved
-saveref_points_list = False
+    # If the generated final marked image want to be saved
+    save_img = True
+    # If the generated reference point list want to be saved
+    saveref_points_list = False
 
-# Batch process
-for i in range(start, end+1):
-    horizontal = True
-    if i in [1, 3, 7, 11,14,15,16,17,18,19,20,21,22,23,24,25,26]:
-        horizontal = False
-    RefPointsGeneralSkltn(i, k, horizontal, save_img, saveref_points_list)
+    # Batch process
+    for i in range(start, end+1):
+        horizontal = True
+        if i in [1, 3, 7, 11,14,15,16,17,18,19,20,21,22,23,24,25,26]:
+            horizontal = False
+        RefPointsGeneralSkltn(i, k, horizontal, save_img, saveref_points_list)
 
 
 # Finish time counter
