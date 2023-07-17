@@ -2,6 +2,8 @@
 Created on Mon Jul 10 2023
 @author: jca
 
+Creates  MAD result on full subimg, it does not consider the windows that are listed in unit result for example
+
 """
 
 

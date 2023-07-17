@@ -2,6 +2,7 @@
 Created on Mon Jul 10 2023
 @author: jca
 
+Checks if the skeleton pixels are close to the ref points and generates a points for results text file
 
 """
 
