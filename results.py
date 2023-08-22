@@ -16,7 +16,11 @@ import cv2
 import Dictionary as dict
 from skimage.util import invert
 from numpy import empty
+import time
+import glob
+from PIL import Image
 
+start_time = time.time()
 
 path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 
@@ -24,6 +28,9 @@ path = r'C:\Users\juanc\OneDrive - KTH\Journals\01-Quantification\Image_list'
 pixel_width=0.08
 winW = 28
 winH = 28
+method_threshold=2.5    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+save_info=True
+save_img=True
 crack=0
 
 # region crack info
@@ -178,6 +185,9 @@ WindowsCrack11=[ _DCS7221_343  ,_DCS7221_344 ,_DCS7221_377 ,_DCS7221_378 ,_DCS72
 WindowsCrack12=[ _DCS7221_606  ,_DCS7221_607 ,_DCS7221_608 ,_DCS7221_609 ,_DCS7221_610 ,_DCS7221_611 ]
 WindowsCrack13=[ _DCS7221_612  ,_DCS7221_613 ,_DCS7221_614 ,_DCS7221_615 ,_DCS7221_616 ,_DCS7221_617 ]
 
+# Crack dimensions in terms of rows and columns of subimages for each crack (first element is the number of the crack)
+crackgeometry = [[1,1,7],[2,5,2],[3,2,8],[4,9,3],[5,5,3],[6,5,3],[7,4,6],[8,5,2],[9,5,4],[10,6,3],[11,6,8],[12,6,2],[13,6,2]]
+
 # endregion
 
 crack=[Crack1,Crack2,Crack3,Crack4,Crack5,Crack6,Crack7,Crack8,Crack9,Crack10,Crack11,Crack12,Crack13] # list of cracks to check ()
@@ -185,124 +195,41 @@ windows=[WindowsCrack1,WindowsCrack2,WindowsCrack3,WindowsCrack4,WindowsCrack5,W
 
 resultlis=[]
 
-def sliding_window(image, stepSize, windowSize):
-    """
-    Sliding window within the loaded image. The window corresponds to a squared window that slides across the image
-    according to the step size.
 
-     Parameters
-    ----------
-    image : ndarray
-            Image where the window will slide.
-    StepSize :  Stride for the window
-    windowSize : Size of the squared window
-
-    """
-
-
-    # slide a window across the image
-    for y in range(56, image.shape[0], stepSize):
-        for x in range(28, image.shape[1], stepSize):
-            # yield the current window
-            yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
-
-
-def balanced_hist_thresholding(b):
-    # Starting point of histogram
-    i_s = np.min(np.where(b[0] > 0))
-    # End point of histogram
-    i_e = np.max(np.where(b[0] > 0))
-    # Center of histogram
-    i_m = (i_s + i_e) // 2
-    # Left side weight
-    w_l = np.sum(b[0][0:i_m + 1])
-    # Right side weight
-    w_r = np.sum(b[0][i_m + 1:i_e + 1])
-    # Until starting point not equal to endpoint
-    while (i_s != i_e):
-        # If right side is heavier
-        if (w_r > w_l):
-            # Remove the end weight
-            w_r -= b[0][i_e]
-            i_e -= 1
-            # Adjust the center position and recompute the weights
-            if ((i_s + i_e) // 2) < i_m:
-                w_l -= b[0][i_m]
-                w_r += b[0][i_m]
-                i_m -= 1
-        else:
-            # If left side is heavier, remove the starting weight
-            w_l -= b[0][i_s]
-            i_s += 1
-            # Adjust the center position and recompute the weights
-            if ((i_s + i_e) // 2) >= i_m:
-                w_l += b[0][i_m + 1]
-                w_r -= b[0][i_m + 1]
-                i_m += 1
-    return i_m
-
-
-def selectimg(crack,i):
-        image = cv2.imread(crack+'.jpg')
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        return image,img
-
-def joinwindows(img,windows,i):
-    resultImg = img.copy() * 0
-    clone = img.copy()
-
-    for j in range(0, len(windows[i])):
-        x=windows[i][j][0]                      # x coordinate of the upper left corner of the window to evaluate
-        y=windows[i][j][1]                      # y coordinate of the upper left corner of the window to evaluate
-        window = img[y:y + winH, x:x + winW]  # window to evaluate from x and y coord
-        red = np.histogram(window.ravel(), bins=256, range=[0, 256])   # hist for the window
-        cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)    # rectangle to see where we are in the image
-
-        trhs = balanced_hist_thresholding(red)
-    # ====================================================================================================================================================================================================
-    #     if i==1 and j==6:
-    #         trhs=55
-    # ====================================================================================================================================================================================================
-        ret, thresh = cv2.threshold(window, trhs, 255, cv2.THRESH_BINARY)
-        thresh=invert(thresh)
-        xx = 0
-        yy = 0
-        for k in range(x, x+window.shape[1]):
-
-            for l in range(y, y+window.shape[0]):
-                resultImg[l,k]=thresh[xx,yy]
-                xx+=1
-            yy += 1
-            xx=0
-
-        plt.figure('window hist trsh', figsize=(10, 10))
-        plt.subplot(2, 2, 1)
-        plt.imshow(clone)
-        plt.subplot(2, 2, 2)
-        plt.imshow(window, cmap='gray')
-        plt.subplot(2, 2, 3)
-        plt.hist(window.ravel(), 256, [0, 256])
-        # plt.imshow(clone)
-        plt.subplot(2, 2, 4)
-        plt.imshow(resultImg, cmap='gray')
-
-
-
-    return resultImg,window
 
 for h in range (0,len(crack)):
+    pathsubfolder = '\Crack ' + str(h + 1)  # Name of the folder where the predicted subimages detected as cracked are located
+    path2 = path + pathsubfolder  # Complete the path name with the folder name
+
+    # In case MAD is used, creates a folder for the specific MAD threshold used
+    if method_threshold != 0:
+        try:
+            os.chdir(path2)  # Access the path
+            # Create the Balanced folder if it doesn't exist
+            os.mkdir(os.path.join(path2, 'MAD k=' + str(method_threshold)))
+            print(f'Folder created successfully in {path2}')
+        except OSError as e:
+            print(f'Error creating folder in {path2}: {str(e)}')
+
+    pathMAD=path2+'\MAD k='+str(method_threshold)
+    pathBHist = path2 + '\Balanced'
+    if method_threshold==0:
+        path3=pathBHist
+    else:
+        path3 = pathMAD
+
     for i in range (0, len(crack[h])):
-        pathsubfolder='\Crack '+str(h+1)    # Name of the folder where the predicted subimages detected as cracked are located
-        path2 = path + pathsubfolder        # Complete the path name with the folder name
+
+
+
         os.chdir(path2)                     # Access the path
 
-        selectedimage,imageBW=selectimg(crack[h][i],i)  # Get the subimage (selected image) and turns it into greyscale (imageBW)
-        resultado,wind=joinwindows(imageBW,windows[h],i)# Get the different windows for each subimage together to create an image with only the crack
+        selectedimage,imageBW=dict.selectimg(crack[h][i])  # Get the subimage (selected image) and turns it into greyscale (imageBW)
+        resultado,wind=dict.joinwindows(imageBW,windows[h],i,winH,winW,method_threshold)# Get the different windows for each subimage together to create an image with only the crack
         resultlis.append(resultado)
         resultImage=dict.cleanimage(resultado,3)    # Takes the image with only the crack and removes small objects according to the specified size
 
-        # widths: list of of widths per pixel of skeleton
+        # widths: list of widths per pixel of skeleton
         # coordsk: List of coordinates of the skeleton's pixels
         # skframes: Skeleton image
         # edgesframes: Image of the edges of the crack
@@ -315,13 +242,16 @@ for h in range (0,len(crack)):
         edgesframesname = 'edgesframes_' + crack[h][i]  # name of the edges image that will be saved
         completeListname = 'completeList_' + crack[h][i]+'.txt'  # name of the image that will be saved
 
-        # dict.imgSaving(path2, resname,resultImage)  # The image where small object have been removed is saved in the path
-        # dict.imgSaving(path2, skframesname, skframes)  # the image where skeleton is saved in the path
-        # dict.imgSaving(path2, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
-        with open(path2 + '//'+completeListname, "w") as output:# saves the list as a txt file
-            output.write(str(completeList))
+        # If the image without small object, skeletons, edges and lists want to be saved
+        if save_info==True:
+            os.chdir(path3)
+            dict.BinarySaving(path3, resname,resultImage)  # The image where small object have been removed is saved in the path
+            dict.BinarySaving(path3, skframesname, skframes)  # the image where skeleton is saved in the path
+            dict.BinarySaving(path3, edgesframesname, edgesframes)  # the image where edges of the crack is saved in the path
+            with open(path3 + '//'+completeListname, "w") as output:# saves the list as a txt file
+                output.write(str(completeList))
 
-        # Image with the crack obtained.
+        # Sub image with the crack obtained.
         # ===============================================
         width=selectedimage.shape[0]
         height=selectedimage.shape[1]
@@ -337,7 +267,38 @@ for h in range (0,len(crack)):
 
                 else:
                     finalsubimg[x, y] = selectedimage[x, y]
-        # finalsubimgname = '' + crack[h][i]  # name of the edges image that will be saved
-        # dict.imgSaving(path2, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
+
+        finalsubimgname = 'finalsubimg' + crack[h][i]  # name of the image that will be saved
         plt.figure('final sub Image', figsize=(10, 10))
+
         plt.imshow(finalsubimg)
+        plt.show()
+        # If the final subimage want to be saved
+        if save_img == True:
+            dict.imgSaving(path3, finalsubimgname, finalsubimg)  # the image where skeleton is saved in the path
+
+    # Image with the crack obtained.
+    # ===============================================
+    nc=crackgeometry[h][1]  # Columns of subimages for the final image
+    nr=crackgeometry[h][2]  # Rows of subimages for the final image
+    subimglist= [os.path.join(path3, f) for f in os.listdir(path3) if "finalsubimg" in f ] # List of cracked processed subimages paths
+    path4= path2+'\\01_Uncracked_subimg\\'  # Path where the uncracked sub images are for the current crack
+    uncrksubimglist=glob.glob(path4 +'*.png')   # List of uncracked subimages paths
+    subimglist=subimglist + uncrksubimglist     # Addition of uncracked subimages paths
+    sortedlist = sorted(subimglist, key=lambda im: int((im.split('_')[-1]).split('.')[0])) # List sorted in ascending order
+    # merge sub images
+    image = dict.merge_images(sortedlist, nr, nc)
+    # merge sub images with their corresponding label
+    image_div = dict.merge_images_with_labels(sortedlist, nr, nc)
+
+    # Save the resulting processed crack and processed crack with subimage divisions and labels
+    if save_img == True:
+        newname = path3.split('\\')[7]+'MAD.png'        # Name for the resulting processed crack
+        newname2 = path3.split('\\')[7]+' divMAD.png'   # Name for the resulting processed crack with divisions
+        image.save(path3 +'\\'+ newname)                # Save image in the corresponding path
+        image_div.save(path3 +'\\'+ newname2)           # Save image in the corresponding path
+
+end_time = time.time()
+
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.2f} seconds")

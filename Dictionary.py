@@ -380,8 +380,8 @@ def CrackWidth(image, pixel_width):
 
         listcomplt[k][0] = x    # X coord of the skeleton pixel
         listcomplt[k][1] = y    # Y coord of the skeleton pixel
-        listcomplt[k][2] = dist # Width in pixels
-        listcomplt[k][3] = dist * pixel_width   # Width in mm
+        listcomplt[k][2] = max(dist-1,0) # Width in pixels
+        listcomplt[k][3] = max(dist-1,0) * pixel_width   # Width in mm
         listcomplt[k][4] = 0    # Space in case danger group is used
 
 
@@ -436,6 +436,8 @@ def detect_outliers_mad(data, threshold):
     median = np.median(data)
     mad = np.median(np.abs(data - median))
     lower_bound = median - threshold * mad
+    while lower_bound<1:
+        lower_bound=(median-lower_bound)/2
     upper_bound = median + threshold * mad
     outliers = [x for x in data if x < lower_bound or x > upper_bound]
     medianlist = [x for x in data if x == median ]
@@ -492,8 +494,6 @@ def final_subimage(image, imageColor,threshold,pixel_width):
 
     return resultImg, finalsubimg, low_bound, medlist, Outl
 
-
-
 def imgSaving(path, name, element):
     """
         Saves an obtained image into a specified directory
@@ -511,6 +511,24 @@ def imgSaving(path, name, element):
     name = os.path.join(path, name+'.png')
     image_element=Image.fromarray(element)  # Transforms the NumPy array into an image element
     image_element.save(name)  # saves the obtained image showing as a .png in the folder
+
+
+def BinarySaving(path, name, element):
+    """
+        Saves an obtained image into a specified directory
+
+    Parameters
+    ----------
+    :param path: path where the image has to be saved
+    :param name: name of the resulting file
+    :param element: Numpy element to be saved as an Image
+
+    Returns
+    -------
+
+    """
+    name = name + '.png'
+    cv2.imwrite(os.path.join(path, name), element)  # saves the obtained image showing as a .png in the folder
 
 def instersection_gaussians(gmm, i, j):
     """
@@ -545,6 +563,7 @@ def instersection_gaussians(gmm, i, j):
 
 def joinwindows(img, windows, i, winH, winW,threshold):
     """
+
        Takes windows (list of windows) from a subimage (can be multiple subimages in a list), apply a threshold method
        and puts all the windows results together in their corresponding place in the subimage. The result is a binary
        image, the results will be added to the original image after calculating widths lenghts and others.
@@ -700,7 +719,7 @@ def selectimg(crack):
     img : Studied image in grayscale
 
     """
-    image = cv2.imread(crack + '.jpg')
+    image = cv2.imread(crack + '.png')
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     return image, img
@@ -736,7 +755,11 @@ def plot_hist_kde_outl(image,clone,Outl,medlist):
     fig=plt.figure('Subimg Hist Normfit Outliers ', figsize=(19, 10))
     plt.subplot(2, 3, 1)
     plt.imshow(image, cmap='gray')
+
+    plt.title('Window')
+
     plt.title('Sub-image')
+
 
     plt.subplot(2, 3, 2)
     plt.imshow(clone, cmap='gray')
