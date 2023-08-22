@@ -512,6 +512,7 @@ def imgSaving(path, name, element):
     image_element=Image.fromarray(element)  # Transforms the NumPy array into an image element
     image_element.save(name)  # saves the obtained image showing as a .png in the folder
 
+
 def BinarySaving(path, name, element):
     """
         Saves an obtained image into a specified directory
@@ -562,6 +563,7 @@ def instersection_gaussians(gmm, i, j):
 
 def joinwindows(img, windows, i, winH, winW,threshold):
     """
+
        Takes windows (list of windows) from a subimage (can be multiple subimages in a list), apply a threshold method
        and puts all the windows results together in their corresponding place in the subimage. The result is a binary
        image, the results will be added to the original image after calculating widths lenghts and others.
@@ -753,7 +755,11 @@ def plot_hist_kde_outl(image,clone,Outl,medlist):
     fig=plt.figure('Subimg Hist Normfit Outliers ', figsize=(19, 10))
     plt.subplot(2, 3, 1)
     plt.imshow(image, cmap='gray')
+
     plt.title('Window')
+
+    plt.title('Sub-image')
+
 
     plt.subplot(2, 3, 2)
     plt.imshow(clone, cmap='gray')
