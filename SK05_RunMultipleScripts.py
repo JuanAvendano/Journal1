@@ -4,13 +4,14 @@ Created on Tue may 09 2023
 
 Script to run multiple scripts together
 
+
 """
 
 import subprocess
 import time
 
 start_time = time.time()
-scripts = ['SK02FSI_refpoint.py', 'SK03FSI_closeRefPointstoSklt.py', 'SK04FSI_StatisticGenSkltn.py'] #
+scripts = ['SK01_skeleton general.py','SK02_refpoint.py', 'SK03_closeRefPointstoSklt.py', 'SK04_StatisticGenSkltn.py'] #
 # Add more scripts as needed
 
 for script in scripts:

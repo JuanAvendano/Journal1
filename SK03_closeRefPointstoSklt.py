@@ -35,7 +35,7 @@ def dist_ref_points_general_skeleton(n,k,save_info):
     # Complete the path name with the folder name
     path2 = path + pathsubfolder
     # Path where results will be saved if using MAD
-    pathMAD = path2 + '\MAD k=' + str(method_threshold)+' full_subimg'
+    pathMAD = path2 + '\MAD k=' + str(method_threshold)
 
     path3 = pathMAD
     # Access the path
@@ -47,7 +47,7 @@ def dist_ref_points_general_skeleton(n,k,save_info):
     # 2.1 Complete list merged
     # # ===============================================================================================================
     # opening the file in read mode
-    with open('000_completeList_Crack' + str(n) +' full_subimg.txt') as f:
+    with open('000_completeList_Crack' + str(n) + '.txt') as f:
         # Read in the header line
         header = f.readline().strip()
 
@@ -109,18 +109,16 @@ def dist_ref_points_general_skeleton(n,k,save_info):
 # # ====================================================================================================================
 # Inputs
 # # ====================================================================================================================
-listk = [2.2, 3, 3.5]
-for x in listk:
-    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-    k = x
-    # Cracks to be studied
-    start = 1
-    end = 29
-    # If the merged list of x,y coordinates and widths want to be saved as text file
-    save_info=True
-    # Batch process
-    for i in range(start, end + 1):
-        dist_ref_points_general_skeleton(i, k, save_info)
+# Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+k = 2
+# Cracks to be studied
+start = 1
+end = 29
+# If the merged list of x,y coordinates and widths want to be saved as text file
+save_info=True
+# Batch process
+for i in range(start, end + 1):
+    dist_ref_points_general_skeleton(i, k, save_info)
 
 
 # Finish time counter

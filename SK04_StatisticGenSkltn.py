@@ -5,6 +5,7 @@ Created on Tue may 09 2023
 Takes the results of the previous step and compares them with the results of the RefMeasures file to compute the error
 and create the final results report that is saved in the results folder
 
+
 """
 
 from scipy.spatial import KDTree
@@ -64,7 +65,7 @@ def Statistics(k,save_info,start,end):
         path3 = path + pathsubfolder
 
         # Path for the specified MAD value used
-        pathMAD = path3 + '\MAD k=' + str(method_threshold)+' full_subimg'
+        pathMAD = path3 + '\MAD k=' + str(method_threshold)
 
         # 2.2.2. Get the MAD results for each crack
         # # =============================================================================================================...
@@ -113,7 +114,7 @@ def Statistics(k,save_info,start,end):
 
     if save_info == True:
         # Writes the updated coordinates to a new text file
-        results_filename = '000_Full_List_Results MAD k=' + str(method_threshold)+' full_subimg'+'.txt'
+        results_filename = '000_Full_List_Results MAD k=' + str(method_threshold)+'.txt'
         # Columns names
         column_names = ['Crack','Measurement','X position','Y position','Manual measurement (mm)','Y position',
                         'X position','Width(pxl)','Width(mm)','DG','Error']
@@ -130,17 +131,15 @@ def Statistics(k,save_info,start,end):
 # # ====================================================================================================================
 # Inputs
 # # ====================================================================================================================
-listk=[2.2,3,3.5]
-for x in listk:
-    # Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
-    k = x
-    # Cracks to be studied
-    start = 1
-    end = 29
-    # If the merged list of x,y coordinates and widths want to be saved as text file
-    save_info=True
-    # Batch process
-    Statistics(k,save_info,start,end)
+# Must be 0 if method is Balanced histogram. If it is MAD the value is the threshold value
+k = 2
+# Cracks to be studied
+start = 1
+end = 29
+# If the merged list of x,y coordinates and widths want to be saved as text file
+save_info=True
+# Batch process
+Statistics(k,save_info,start,end)
 
 # Finish time counter
 end_time = time.time()
