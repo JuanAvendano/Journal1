@@ -20,6 +20,7 @@ from skimage.morphology import label
 from scipy.optimize import root_scalar
 from skimage.morphology import skeletonize
 from PIL import Image, ImageDraw, ImageFont
+from skimage.morphology import reconstruction
 from skimage.morphology import remove_small_objects
 
 
@@ -70,6 +71,26 @@ def balanced_hist_thresholding(b):
                 w_r -= b[0][i_m + 1]
                 i_m += 1
     return i_m
+
+def bilateral_filter(image,k):
+    """Takes an image and applies bilateral filtering
+    :param image: image in black and white
+    :param k: threshold used for the image
+
+    :return: bilateral:filtered Image
+    :return: Databilateral:flatten array of the filtered Image
+    """
+    ImgData=image.ravel()
+    median = np.median(ImgData)
+    mad = np.median(np.abs(ImgData - median))
+    threshold = k
+    distMAD_median = threshold * mad
+
+    bilateral = cv2.bilateralFilter(image, d=9, sigmaColor=distMAD_median, sigmaSpace=10)
+
+    Databilateral = bilateral.ravel()
+
+    return bilateral, Databilateral
 
 def cleanimage(image,minsize):
     """Takes an image and removes  objects having an area equals to minsize. It returns the cleaned image after removing
@@ -444,6 +465,32 @@ def detect_outliers_mad(data, threshold):
     inliers = [x for x in data if lower_bound <= x and upper_bound >= x]
     return outliers, median, medianlist, inliers, lower_bound
 
+def dilation(image):
+    """Takes an image and applies dilation having the image as seed, not a structuring element
+    :param image: image to be dilated
+
+    :return: dilated_image:dilated Image
+    """
+    seed = np.copy(image)
+    seed[1:-1, 1:-1] = image.min()
+    mask = image
+    dilated_image = reconstruction(seed, mask, method='dilation')
+
+    return dilated_image
+
+def erosion(image):
+    """Takes an image and applies erosion having the image as seed, not a structuring element
+    :param image: image to be eroded
+
+    :return: eroded_image:eroded Image
+    """
+    seed = np.copy(image)
+    seed[1:-1, 1:-1] = image.min()
+    mask = image
+    eroded_image = reconstruction(seed, mask, method='erosion')
+
+    return eroded_image
+
 def final_subimage(image, imageColor,threshold,pixel_width):
     """
     Applies MAD with the introduced threshold for the input image.
@@ -511,7 +558,6 @@ def imgSaving(path, name, element):
     name = os.path.join(path, name+'.png')
     image_element=Image.fromarray(element)  # Transforms the NumPy array into an image element
     image_element.save(name)  # saves the obtained image showing as a .png in the folder
-
 
 def BinarySaving(path, name, element):
     """
