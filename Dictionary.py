@@ -485,7 +485,7 @@ def erosion(image):
     :return: eroded_image:eroded Image
     """
     seed = np.copy(image)
-    seed[1:-1, 1:-1] = image.min()
+    seed[1:-1, 1:-1] = image.max()
     mask = image
     eroded_image = reconstruction(seed, mask, method='erosion')
 
@@ -677,26 +677,44 @@ def merge_images(imlist, nr, nc):
     :return: the merged Image object
 
     """
-    images = [Image.open(path) for path in imlist]
+    try:
+        images = [Image.open(path) for path in imlist]
+        widths, heights = zip(*(i.size for i in images))
+        result_width = max(widths) * nc
+        result_height = max(heights) * nr
+        # Create new Image
+        result = Image.new('RGB', (result_width, result_height))
+        # Paste subimages into result image
+        for row in range(nr):
+            for col in range(nc):
+                index = row * nc + col
+                if index >= len(images):
+                    break
+                image = images[index]
+                x_offset = col * max(widths)
+                y_offset = row * max(heights)
+                result.paste(image, (x_offset, y_offset))
+    except Exception as e1:
+        try:
+            images = imlist
+            widths, heights = zip(*(i.shape for i in images))
+            result_width = max(widths) * nc
+            result_height = max(heights) * nr
+            # Create new Image
+            result = np.zeros((result_height,result_width), dtype=np.uint8)
+            for row in range(nr):
+                for col in range(nc):
+                    index = row * nc + col
+                    if index >= len(images):
+                        break
+                    image = images[index]
+                    x_offset = col * max(widths)
+                    y_offset = row * max(heights)
+                    result[y_offset:y_offset+image.shape[0], x_offset:x_offset+image.shape[1]] = image
+        except OSError as e2:
+            print (f'Could not complete task, it might be that inputs are neither a list of IMG elements nor ndarrays '
+                   f'elements')
 
-    # Get dimensions of result image
-    widths, heights = zip(*(i.size for i in images))
-    result_width = max(widths) * nc
-    result_height = max(heights) * nr
-
-    # Create new Image
-    result = Image.new('RGB', (result_width, result_height))
-
-    # Paste subimages into result image
-    for row in range(nr):
-        for col in range(nc):
-            index = row * nc + col
-            if index >= len(images):
-                break
-            image = images[index]
-            x_offset = col * max(widths)
-            y_offset = row * max(heights)
-            result.paste(image, (x_offset, y_offset))
 
     return result
 
@@ -717,37 +735,72 @@ def merge_images_with_labels(imlist, nr, nc):
     :return: the merged Image object
 
     """
-    images = [Image.open(path) for path in imlist]
+    try:
+        images = [Image.open(path) for path in imlist]
 
-    # Get dimensions of result image
-    widths, heights = zip(*(i.size for i in images))
-    result_width = max(widths) * nc
-    result_height = max(heights) * nr
+        # Get dimensions of result image
+        widths, heights = zip(*(i.size for i in images))
+        result_width = max(widths) * nc
+        result_height = max(heights) * nr
 
-    result = Image.new('RGB', (result_width, result_height))    # Create new Image
-    # Paste subimages into result image
-    for row in range(nr):
-        for col in range(nc):
-            index = row * nc + col
-            if index >= len(images):
-                break
-            image = images[index]
-            x_offset = col * max(widths)
-            y_offset = row * max(heights)
-            result.paste(image, (x_offset, y_offset))
-            # Draw bounding box around image
-            draw = ImageDraw.Draw(result)
-            draw.rectangle((x_offset, y_offset, x_offset + image.width, y_offset + image.height), outline='white')
+        result = Image.new('RGB', (result_width, result_height))    # Create new Image
+        # Paste subimages into result image
+        for row in range(nr):
+            for col in range(nc):
+                index = row * nc + col
+                if index >= len(images):
+                    break
+                image = images[index]
+                x_offset = col * max(widths)
+                y_offset = row * max(heights)
+                result.paste(image, (x_offset, y_offset))
+                # Draw bounding box around image
+                draw = ImageDraw.Draw(result)
+                draw.rectangle((x_offset, y_offset, x_offset + image.width, y_offset + image.height), outline='white')
 
-            # Add label on top of image
-            label = f"{imlist[index].split('_')[-1].split('.')[0]}"
-            font = ImageFont.truetype("arial.ttf", 20)
-            text_width, text_height = draw.textsize(label, font)
-            text_x = x_offset + (image.width - text_width) // 2
-            text_y = y_offset + text_height - 5
-            draw.rectangle((text_x - 5, text_y - 5, text_x + text_width + 5, text_y + text_height + 5),
-                           fill=(0, 0, 0, 128))
-            draw.text((text_x, text_y), label, font=font, fill='white')
+                # Add label on top of image
+                label = f"{imlist[index].split('_')[-1].split('.')[0]}"
+                font = ImageFont.truetype("arial.ttf", 20)
+                text_width, text_height = draw.textsize(label, font)
+                text_x = x_offset + (image.width - text_width) // 2
+                text_y = y_offset + text_height - 5
+                draw.rectangle((text_x - 5, text_y - 5, text_x + text_width + 5, text_y + text_height + 5),
+                               fill=(0, 0, 0, 128))
+                draw.text((text_x, text_y), label, font=font, fill='white')
+    except Exception as notIMG:
+        try:
+            labels = [img[0] for img in imlist]
+            images = [img[1] for img in imlist]
+            widths, heights = zip(*(i.shape for i in images))
+            result_width = max(widths) * nc
+            result_height = max(heights) * nr
+            # Create new Image
+            result = np.zeros((result_height, result_width), dtype=np.uint8)
+            for row in range(nr):
+                for col in range(nc):
+                    index = row * nc + col
+                    if index >= len(images):
+                        break
+                    image = images[index]
+                    x_offset = col * max(widths)
+                    y_offset = row * max(heights)
+                    result[y_offset:y_offset + image.shape[0], x_offset:x_offset + image.shape[1]] = image
+
+                    cv2.rectangle(result, (x_offset, y_offset), (x_offset + image.shape[1], y_offset + image.shape[0]),(255, 255, 255), 1)
+                    label = f"{labels[index].split('_')[-1].split('.')[0]}"
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 0.5
+                    font_thickness = 1
+                    text_size = cv2.getTextSize(label, font, font_scale, font_thickness)[0]
+                    text_x = x_offset + (image.shape[1] - text_size[0]) // 2
+                    text_y = y_offset + text_size[1] + 8
+                    cv2.rectangle(result, (text_x - 5, text_y - text_size[1] - 5), (text_x + text_size[0] + 5, text_y + 5),
+                                  (0, 0, 0), -1)
+                    cv2.putText(result, label, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness)
+
+        except OSError as e2:
+            print(f'Could not complete task, it might be that inputs are neither a list of IMG elements nor ndarrays '
+                  f'elements')
 
     return result
 
