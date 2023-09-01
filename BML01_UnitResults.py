@@ -30,7 +30,7 @@ from scipy.stats import norm
 
 start_time = time.time()
 
-def unit_result_bilateral_MAD(n, k, pixelwidth, save_subimg,save_info, saveimgparts, save_preliminaryimg, saveimg):
+def unit_result_BML(n, k, pixelwidth, save_subimg,save_info, saveimgparts, save_preliminaryimg, saveimg):
     # # ================================================================================================================
     # Inputs
     # # ================================================================================================================
@@ -226,8 +226,8 @@ def unit_result_bilateral_MAD(n, k, pixelwidth, save_subimg,save_info, saveimgpa
     # merge sub images with their corresponding label
     image_div = dicc.merge_images_with_labels(sortedlist, nr, nc)
     if save_preliminaryimg == True:
-        newname = pathResult.split('\\')[8] + 'BML.png'  # Name for the resulting processed crack
-        newname2 = pathResult.split('\\')[8] + ' divBML.png'  # Name for the resulting processed crack with divisions
+        newname = pathResult.split('\\')[8] + 'BML'  # Name for the resulting processed crack
+        newname2 = pathResult.split('\\')[8] + ' divBML'  # Name for the resulting processed crack with divisions
         dicc.imgSaving(pathResult, newname, image)
         dicc.imgSaving(pathResult, newname2, image_div)
 
@@ -244,9 +244,9 @@ def unit_result_bilateral_MAD(n, k, pixelwidth, save_subimg,save_info, saveimgpa
 
     # Names for the results images
 
-    skframesname = 'skframes_' + 'Crack ' + str(n)  # name of the skeleton image that will be saved
-    edgesframesname = 'edgesframes_' + 'Crack ' + str(n)  # name of the edges image that will be saved
-    completeListname = 'completeList_' + 'Crack ' + str(n) + '.txt'  # name of the image that will be saved
+    skframesname = 'skframes_BML_' + 'Crack ' + str(n)  # name of the skeleton image that will be saved
+    edgesframesname = 'edgesframes_BML_' + 'Crack ' + str(n)  # name of the edges image that will be saved
+    completeListname = 'completeList_BML_' + 'Crack ' + str(n) + '.txt'  # name of the image that will be saved
 
     # Saves the image without small object, skeletons, edges
     # ===============================================
@@ -297,7 +297,7 @@ def unit_result_bilateral_MAD(n, k, pixelwidth, save_subimg,save_info, saveimgpa
         # The image is saved in the path
         dicc.imgSaving(pathResult, finalImgName, finalImg)
 
-unit_result_bilateral_MAD(22, 3.5, 0.01,save_subimg=False, save_info=True, saveimgparts=False, save_preliminaryimg=True, saveimg=True)
+# unit_result_BML(2, 3.5, 0.01,save_subimg=False, save_info=True, saveimgparts=False, save_preliminaryimg=True, saveimg=True)
 
 # Finish time counter
 end_time = time.time()
